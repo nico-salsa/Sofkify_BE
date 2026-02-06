@@ -3,6 +3,8 @@ package com.sofkify.userservice.domain.ports.in;
 import com.sofkify.userservice.domain.model.User;
 import com.sofkify.userservice.domain.model.UserRole;
 
+import java.util.Optional;
+
 public interface UserServicePort {
 
     // Crear nuevo usuario (siempre se crea como CLIENTE por regla de negocio)
@@ -10,6 +12,9 @@ public interface UserServicePort {
 
     // Buscar usuario por email
     User findByEmail(String email);
+
+    // Buscar usuario por ID
+    Optional<User> findById(String id);
 
     // Actualizar perfil de usuario
     User updateProfile(String userId, String newName, String newEmail);
