@@ -20,8 +20,8 @@ public class UserMapper {
                 .email(entity.getEmail())
                 .password(entity.getPassword())
                 .name(entity.getName())
-                .role(UserRole.valueOf(entity.getRole()))
-                .status(UserStatus.valueOf(entity.getStatus()))
+                .role(entity.getRole())
+                .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -38,8 +38,8 @@ public class UserMapper {
                 user.getEmail(),
                 user.getPassword(),
                 user.getName(),
-                user.getRole().name(),
-                user.getStatus().name(),
+                user.getRole(),
+                user.getStatus(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );

@@ -1,5 +1,7 @@
 package com.sofkify.userservice.infrastructure.adapters.out.persistence.entity;
 
+import com.sofkify.userservice.domain.model.UserRole;
+import com.sofkify.userservice.domain.model.UserStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -23,11 +25,11 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private String role;
+    private UserRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private String status;
+    private UserStatus status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -40,7 +42,7 @@ public class UserEntity {
     }
 
     public UserEntity(String id, String email, String password, String name,
-                      String role, String status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                      UserRole role, UserStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -84,19 +86,19 @@ public class UserEntity {
         this.name = name;
     }
 
-    public String getRole() {
+    public UserRole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(UserRole role) {
         this.role = role;
     }
 
-    public String getStatus() {
+    public UserStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(UserStatus status) {
         this.status = status;
     }
 
