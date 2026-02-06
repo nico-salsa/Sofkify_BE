@@ -196,4 +196,3 @@ public class User {
         return new Builder();
     }
 }
-}
