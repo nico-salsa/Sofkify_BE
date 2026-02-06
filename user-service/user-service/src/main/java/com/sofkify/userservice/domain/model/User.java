@@ -133,5 +133,67 @@ public class User {
         return updatedAt;
     }
 
-    // ... otros getters sin setters (inmutabilidad)
+    public static class Builder {
+        private String id;
+        private String email;
+        private String password;
+        private String name;
+        private UserRole role;
+        private UserStatus status;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public Builder id(String id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder role(UserRole role) {
+            this.role = role;
+            return this;
+        }
+
+        public Builder status(UserStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder updatedAt(LocalDateTime updatedAt) {
+            this.updatedAt = updatedAt;
+            return this;
+        }
+
+        public User build() {
+            User user = new User(id, email, password, name, role);
+            user.status = this.status;
+            user.createdAt = this.createdAt;
+            user.updatedAt = this.updatedAt;
+            return user;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+}
 }
