@@ -1,0 +1,75 @@
+version: '3.8'
+
+# Definición de los servicios (contenedores)
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: sofkify-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: sofkify
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - sofkify-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservicio de usuarios
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: sofkify-user-service
+    environment:
+      # Configuración de base de datos para Docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sofkify_users
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sofkify-network
+    restart: unless-stopped
+
+  # Microservicio de productos
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: sofkify-product-service
+    environment:
+      # Configuración de base de datos para Docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sofkify_products_bd
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sofkify-network
+    restart: unless-stopped
+
+# Volúmenes para persistir datos
+volumes:
+  postgres_data:
+
+# Red para comunicación entre contenedores
+networks:
+  sofkify-network:
+    driver: bridge
