@@ -16,9 +16,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    
+
 server:
   port: 8081
+  servlet:
+    context-path: /api
 
 logging:
   level:
