@@ -63,12 +63,7 @@ public class CartMapper {
         if (jpaEntity.getItems() != null) {
             jpaEntity.getItems().stream()
                     .map(this::toDomainEntity)
-                    .forEach(item -> cart.addItem(
-                        item.getProductId(),
-                        item.getProductName(),
-                        item.getProductPrice(),
-                        item.getQuantity()
-                    ));
+                    .forEach(cart::addExistingItem);
         }
 
         return cart;

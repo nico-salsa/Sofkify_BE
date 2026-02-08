@@ -57,6 +57,12 @@ public class Cart {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void addExistingItem(CartItem cartItem) {
+        Objects.requireNonNull(cartItem, "Cart item cannot be null");
+        items.add(cartItem);
+        this.updatedAt = LocalDateTime.now();
+    }
+
     private Optional<CartItem> findItemByProductId(UUID productId) {
         return items.stream()
             .filter(item -> item.getProductId().equals(productId))
