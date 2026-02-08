@@ -6,6 +6,7 @@ import com.sofkify.cartservice.application.dto.CartResponse;
 import com.sofkify.cartservice.domain.model.Cart;
 import com.sofkify.cartservice.domain.model.CartItem;
 import com.sofkify.cartservice.domain.ports.in.AddItemToCartUseCase;
+import com.sofkify.cartservice.domain.ports.in.GetCartUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,11 @@ import java.util.UUID;
 public class CartController {
 
     private final AddItemToCartUseCase addItemToCartUseCase;
+    private final GetCartUseCase getCartUseCase;
 
-    public CartController(AddItemToCartUseCase addItemToCartUseCase) {
+    public CartController(AddItemToCartUseCase addItemToCartUseCase, GetCartUseCase getCartUseCase) {
         this.addItemToCartUseCase = addItemToCartUseCase;
+        this.getCartUseCase = getCartUseCase;
     }
 
     /**
@@ -52,6 +55,23 @@ public class CartController {
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(toCartResponse(cart));
+    }
+
+    /**
+     * GET /api/carts
+     * 
+     * Headers:
+     * X-Customer-Id: UUID (required) - ID del cliente existente en user-service
+     * 
+     * Responses:
+     * 200 - Carrito encontrado exitosamente
+     * 404 - Carrito no encontrado para el cliente
+     * 500 - Error interno del servidor
+     */
+    @GetMapping
+    public ResponseEntity<CartResponse> getCart(@RequestHeader("X-Customer-Id") UUID customerId) {
+        Cart cart = getCartUseCase.getCartByCustomerId(customerId);
+        return ResponseEntity.ok(toCartResponse(cart));
     }
 
     private CartResponse toCartResponse(Cart cart) {
