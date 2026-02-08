@@ -17,13 +17,32 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
 server:
   port: 8081
   servlet:
     context-path: /api
+
+# Configuración de RabbitMQ
+rabbitmq:
+  exchanges:
+    order: order.exchange
+  queues:
+    stock-decrement: product.stock.decrement.queue
+  routing-keys:
+    order-created: order.created
+    stock-decremented: stock.decremented
+    order-failed: order.failed
 
 logging:
   level:
     com.sofkify.productservice: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.amqp: DEBUG

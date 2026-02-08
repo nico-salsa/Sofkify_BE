@@ -12,7 +12,7 @@ public class Product {
     private final String name;
     private final String description;
     private final BigDecimal price;
-    private final int stock;
+    private int stock;
     private final ProductStatus status;
 
     private Product(UUID id, String name, String description, BigDecimal price, int stock, 
@@ -56,6 +56,20 @@ public class Product {
         }
     }
 
+    public void decrementStock(int quantity) {
+        if (quantity <= 0) {
+            throw new InvalidProductStockException("Quantity to decrement must be greater than zero");
+        }
+        
+        if (this.stock < quantity) {
+            throw new InvalidProductStockException(
+                String.format("Insufficient stock. Available: %d, Required: %d", this.stock, quantity)
+            );
+        }
+        
+        this.stock -= quantity;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -79,7 +93,6 @@ public class Product {
     public ProductStatus getStatus() {
         return status;
     }
-
 
     public boolean isActive() {
         return ProductStatus.ACTIVE.equals(status);
