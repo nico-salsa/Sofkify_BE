@@ -8,6 +8,7 @@ import com.sofkify.cartservice.domain.model.Cart;
 import com.sofkify.cartservice.domain.model.CartItem;
 import com.sofkify.cartservice.domain.ports.in.AddItemToCartUseCase;
 import com.sofkify.cartservice.domain.ports.in.GetCartUseCase;
+import com.sofkify.cartservice.domain.ports.in.RemoveItemFromCartUseCase;
 import com.sofkify.cartservice.domain.ports.in.UpdateItemQuantityUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,16 @@ public class CartController {
     private final AddItemToCartUseCase addItemToCartUseCase;
     private final GetCartUseCase getCartUseCase;
     private final UpdateItemQuantityUseCase updateItemQuantityUseCase;
+    private final RemoveItemFromCartUseCase removeItemFromCartUseCase;
 
     public CartController(AddItemToCartUseCase addItemToCartUseCase, 
                          GetCartUseCase getCartUseCase,
-                         UpdateItemQuantityUseCase updateItemQuantityUseCase) {
+                         UpdateItemQuantityUseCase updateItemQuantityUseCase,
+                         RemoveItemFromCartUseCase removeItemFromCartUseCase) {
         this.addItemToCartUseCase = addItemToCartUseCase;
         this.getCartUseCase = getCartUseCase;
         this.updateItemQuantityUseCase = updateItemQuantityUseCase;
+        this.removeItemFromCartUseCase = removeItemFromCartUseCase;
     }
 
     /**
@@ -105,6 +109,27 @@ public class CartController {
                                                            @PathVariable UUID cartItemId,
                                                            @Valid @RequestBody UpdateQuantityRequest request) {
         Cart cart = updateItemQuantityUseCase.updateItemQuantity(customerId, cartItemId, request.quantity());
+        return ResponseEntity.ok(toCartResponse(cart));
+    }
+
+    /**
+     * DELETE /api/carts/items/{cartItemId}
+     * 
+     * Headers:
+     * X-Customer-Id: UUID (required) - ID del cliente existente en user-service
+     * 
+     * Path variable:
+     * cartItemId: UUID (required) - ID del item del carrito a eliminar
+     * 
+     * Responses:
+     * 200 - Item eliminado exitosamente
+     * 400 - UUID inválido, carrito o item no encontrado
+     * 500 - Error interno del servidor
+     */
+    @DeleteMapping("/items/{cartItemId}")
+    public ResponseEntity<CartResponse> removeItemFromCart(@RequestHeader("X-Customer-Id") UUID customerId,
+                                                          @PathVariable UUID cartItemId) {
+        Cart cart = removeItemFromCartUseCase.removeItemFromCart(customerId, cartItemId);
         return ResponseEntity.ok(toCartResponse(cart));
     }
 
