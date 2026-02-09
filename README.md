@@ -349,6 +349,11 @@ cd order-service && ./gradlew bootRun &
 - **[Cart Service](./cart-service/README.md)** - Carritos de compra
 - **[Order Service](./order-service/README.md)** - Gestión de órdenes
 
+### **📚 Documentación de Arquitectura y Desarrollo:**
+- **[IA Workflow](./docs%20IA/AI_WORKFLOW.md)** - Estrategia de trabajo AI-first y flujo de desarrollo
+- **[Arquitectura del Sistema](./docs%20IA/architecture.md)** - Principios arquitectónicos y patrones de diseño
+- **[Contexto del Dominio](./docs%20IA/context.md)** - Reglas de negocio y modelo de dominio
+
 ### **API Gateway (Futuro):**
 - **Endpoint Unificado**: `http://localhost:8080/api-gateway`
 - **Documentación Swagger**: `/swagger-ui.html`
