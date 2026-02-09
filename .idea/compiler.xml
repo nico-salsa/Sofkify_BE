@@ -2,9 +2,15 @@
 <project version="4">
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="cart-service" options="-parameters" />
+      <module name="cart-service.main" options="-parameters" />
+      <module name="cart-service.test" options="-parameters" />
       <module name="com.sofkify.user-service" options="-parameters" />
       <module name="com.sofkify.user-service.main" options="-parameters" />
       <module name="com.sofkify.user-service.test" options="-parameters" />
+      <module name="order-service" options="-parameters" />
+      <module name="order-service.main" options="-parameters" />
+      <module name="order-service.test" options="-parameters" />
       <module name="product-service" options="-parameters" />
       <module name="product-service.main" options="-parameters" />
       <module name="product-service.test" options="-parameters" />

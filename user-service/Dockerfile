@@ -1,32 +1,30 @@
-# ================================
-# BUILD STAGE
-# ================================
+# Etapa de build usando Gradle
 FROM gradle:8-jdk21 AS build
-
 WORKDIR /app
 
-COPY gradlew .
-COPY gradle/ gradle/
-COPY build.gradle .
-COPY settings.gradle* .
+# Copiar archivos de configuración
+COPY build.gradle settings.gradle ./
 
-RUN chmod +x gradlew
-RUN ./gradlew dependencies --no-daemon || true
+# Copiar código fuente
+COPY src ./src
 
-COPY src/ src/
+# Construir la aplicación (sin tests para optimizar)
+RUN ./gradlew build -x test
 
-RUN ./gradlew clean bootJar -x test --no-daemon
+# Etapa de runtime - imagen ligera con JRE
+FROM openjdk:21-jre-slim
 
-
-# ================================
-# RUNTIME STAGE
-# ================================
-FROM eclipse-temurin:21-jre
-
+# Crear directorio de trabajo
 WORKDIR /app
 
+# Copiar el JAR construido desde la etapa de build
 COPY --from=build /app/build/libs/*.jar app.jar
 
+# Exponer puerto del servicio
 EXPOSE 8080
 
-ENTRYPOINT ["java","-XX:+UseContainerSupport","-jar","app.jar"]
+# Variables de entorno por defecto
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
+
+# Ejecutar la aplicación
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

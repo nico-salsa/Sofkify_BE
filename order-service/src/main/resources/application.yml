@@ -1,0 +1,51 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: order-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sofkify_orders_bd
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+# Configuración del Cart Service
+cart:
+  service:
+    url: http://localhost:8083/api
+
+# Configuración de RabbitMQ
+rabbitmq:
+  exchanges:
+    order: order.exchange
+  queues:
+    stock-decrement: product.stock.decrement.queue
+    order-status: order.status.queue
+  routing-keys:
+    order-created: order.created
+    stock-decremented: stock.decremented
+    order-failed: order.failed
+
+logging:
+  level:
+    com.sofkify.orderservice: DEBUG
+    org.springframework.web.client: DEBUG
+    org.springframework.amqp: DEBUG
