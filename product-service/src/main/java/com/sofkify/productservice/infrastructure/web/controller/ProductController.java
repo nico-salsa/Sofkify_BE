@@ -5,7 +5,7 @@ import com.sofkify.productservice.application.port.in.GetProductUseCase;
 import com.sofkify.productservice.domain.model.Product;
 import com.sofkify.productservice.infrastructure.web.dto.request.CreateProductRequest;
 import com.sofkify.productservice.infrastructure.web.dto.response.ProductResponse;
-import com.sofkify.productservice.infrastructure.persistence.mapper.ProductMapper;
+import com.sofkify.productservice.infrastructure.web.mapper.ProductDtoMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,23 +20,26 @@ public class ProductController {
 
     private final CreateProductUseCase createProductUseCase;
     private final GetProductUseCase getProductUseCase;
+    private final ProductDtoMapper dtoMapper;
 
-    public ProductController(CreateProductUseCase createProductUseCase, GetProductUseCase getProductUseCase) {
+    public ProductController(CreateProductUseCase createProductUseCase, GetProductUseCase getProductUseCase, ProductDtoMapper dtoMapper) {
         this.createProductUseCase = createProductUseCase;
         this.getProductUseCase = getProductUseCase;
+        this.dtoMapper = dtoMapper;
     }
 
     // POST /products - Create new product
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
+        Product product = dtoMapper.toDomain(request);
         Product createdProduct = createProductUseCase.createProduct(
-            request.getName(),
-            request.getDescription(),
-            request.getPrice(),
-            request.getStock()
+            product.getName(),
+            product.getDescription(),
+            product.getPrice(),
+            product.getStock()
         );
 
-        ProductResponse response = ProductMapper.toResponse(createdProduct);
+        ProductResponse response = dtoMapper.toResponse(createdProduct);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -53,7 +56,7 @@ public class ProductController {
         }
 
         List<ProductResponse> response = products.stream()
-            .map(ProductMapper::toResponse)
+            .map(dtoMapper::toResponse)
             .toList();
 
         return ResponseEntity.ok(response);
@@ -63,7 +66,7 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProductById(@PathVariable UUID id) {
         return getProductUseCase.getProductById(id)
-            .map(product -> ResponseEntity.ok(ProductMapper.toResponse(product)))
+            .map(product -> ResponseEntity.ok(dtoMapper.toResponse(product)))
             .orElse(ResponseEntity.notFound().build());
     }
 

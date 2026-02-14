@@ -1,7 +1,6 @@
 package com.sofkify.productservice.infrastructure.persistence.mapper;
 
 import com.sofkify.productservice.domain.model.Product;
-import com.sofkify.productservice.infrastructure.web.dto.response.ProductResponse;
 import com.sofkify.productservice.infrastructure.persistence.entity.ProductEntity;
 
 public class ProductMapper {
@@ -25,17 +24,6 @@ public class ProductMapper {
             entity.getPrice(),
             entity.getStock(),
             entity.getStatus()
-        );
-    }
-
-    public static ProductResponse toResponse(Product product) {
-        return new ProductResponse(
-            product.getId(),
-            product.getName(),
-            product.getDescription(),
-            product.getPrice(),
-            product.getStock(),
-            product.getStatus()
         );
     }
 }
