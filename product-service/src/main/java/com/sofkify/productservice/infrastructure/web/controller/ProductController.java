@@ -27,21 +27,12 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
         Product product = dtoMapper.toDomain(request);
-        Product createdProduct = createProductUseCase.createProduct(
-            product.getName(),
-            product.getDescription(),
-            product.getPrice(),
-            product.getStock()
-        );
-
-        ProductResponse response = dtoMapper.toResponse(createdProduct);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        Product createdProduct = createProductUseCase.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtoMapper.toResponse(createdProduct));
     }
 
-    // GET /products - List all products (optional: ?status=ACTIVE|INACTIVE|DELETED)
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAllProducts(
-        @RequestParam(required = false) String status) {
+    public ResponseEntity<List<ProductResponse>> getAllProducts(@RequestParam(required = false) String status) {
 
         List<Product> products;
         if (status != null && !status.trim().isEmpty()) {
@@ -63,9 +54,4 @@ public class ProductController {
             .map(product -> ResponseEntity.ok(dtoMapper.toResponse(product)))
             .orElse(ResponseEntity.notFound().build());
     }
-
-    // TODO: PUT /products/{id} - Update product details
-    // TODO: PATCH /products/{id}/stock - Add stock to product
-    // TODO: DELETE /products/{id} - Soft delete product
-    // TODO: PATCH /products/{id}/status - Change product status
 }

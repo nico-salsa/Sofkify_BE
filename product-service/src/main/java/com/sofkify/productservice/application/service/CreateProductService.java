@@ -6,8 +6,6 @@ import com.sofkify.productservice.domain.model.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-
 @Service
 @RequiredArgsConstructor
 public class CreateProductService implements CreateProductUseCase {
@@ -15,8 +13,13 @@ public class CreateProductService implements CreateProductUseCase {
     private final ProductPersistencePort productPersistencePort;
 
     @Override
-    public Product createProduct(String name, String description, BigDecimal price, int stock) {
-        Product product = Product.create(name, description, price, stock);
-        return productPersistencePort.save(product);
+    public Product createProduct(Product product) {
+        Product productCreated = Product.create(
+            product.getName(),
+            product.getDescription(),
+            product.getPrice(),
+            product.getStock()
+        );
+        return productPersistencePort.save(productCreated);
     }
 }
