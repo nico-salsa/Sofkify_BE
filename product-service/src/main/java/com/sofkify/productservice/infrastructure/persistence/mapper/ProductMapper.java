@@ -1,8 +1,7 @@
 package com.sofkify.productservice.infrastructure.persistence.mapper;
 
 import com.sofkify.productservice.domain.model.Product;
-import com.sofkify.productservice.domain.enums.ProductStatus;
-import com.sofkify.productservice.infrastructure.dto.product.response.ProductResponse;
+import com.sofkify.productservice.infrastructure.web.dto.response.ProductResponse;
 import com.sofkify.productservice.infrastructure.persistence.entity.ProductEntity;
 
 public class ProductMapper {

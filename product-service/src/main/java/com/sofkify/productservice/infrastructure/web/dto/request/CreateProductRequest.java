@@ -1,4 +1,4 @@
-package com.sofkify.productservice.infrastructure.dto.product.request;
+package com.sofkify.productservice.infrastructure.web.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

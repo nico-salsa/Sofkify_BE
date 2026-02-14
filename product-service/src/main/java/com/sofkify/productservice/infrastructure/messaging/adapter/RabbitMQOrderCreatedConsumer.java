@@ -1,4 +1,4 @@
-package com.sofkify.productservice.infrastructure.adapters.in.messaging;
+package com.sofkify.productservice.infrastructure.messaging.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

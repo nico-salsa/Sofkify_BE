@@ -1,10 +1,10 @@
-package com.sofkify.productservice.infrastructure.web;
+package com.sofkify.productservice.infrastructure.web.controller;
 
 import com.sofkify.productservice.application.port.in.CreateProductUseCase;
 import com.sofkify.productservice.application.port.in.GetProductUseCase;
 import com.sofkify.productservice.domain.model.Product;
-import com.sofkify.productservice.infrastructure.dto.product.request.CreateProductRequest;
-import com.sofkify.productservice.infrastructure.dto.product.response.ProductResponse;
+import com.sofkify.productservice.infrastructure.web.dto.request.CreateProductRequest;
+import com.sofkify.productservice.infrastructure.web.dto.response.ProductResponse;
 import com.sofkify.productservice.infrastructure.persistence.mapper.ProductMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

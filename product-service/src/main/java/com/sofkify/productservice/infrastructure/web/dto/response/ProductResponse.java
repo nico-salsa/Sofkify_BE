@@ -1,4 +1,4 @@
-package com.sofkify.productservice.infrastructure.dto.product.response;
+package com.sofkify.productservice.infrastructure.web.dto.response;
 
 import com.sofkify.productservice.domain.enums.ProductStatus;
 
