@@ -14,4 +14,6 @@ public interface ProductPersistencePort {
     List<Product> findAll();
 
     List<Product> findByStatus(String status);
+
+    boolean existsBySku(String sku);
 }

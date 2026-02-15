@@ -13,6 +13,7 @@ public class ProductDtoMapper {
             product.getId(),
             product.getName(),
             product.getDescription(),
+            product.getSku(),
             product.getPrice(),
             product.getStock(),
             product.getStatus()
@@ -23,6 +24,7 @@ public class ProductDtoMapper {
         return new CreateProductCommand(
             request.name(),
             request.description(),
+            request.sku(),
             request.price(),
             request.stock()
         );

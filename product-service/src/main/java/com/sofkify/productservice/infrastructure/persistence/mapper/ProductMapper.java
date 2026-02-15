@@ -11,6 +11,7 @@ public class ProductMapper {
             product.getId(),
             product.getName(),
             product.getDescription(),
+            product.getSku(),
             product.getPrice(),
             product.getStock(),
             product.getStatus()
@@ -22,6 +23,7 @@ public class ProductMapper {
             entity.getId(),
             entity.getName(),
             entity.getDescription(),
+            entity.getSku(),
             entity.getPrice(),
             entity.getStock(),
             entity.getStatus()

@@ -25,6 +25,9 @@ public class ProductEntity {
     @Column(length = 1000)
     private String description;
 
+    @Column(nullable = false, unique = true, length = 100)
+    private String sku;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 

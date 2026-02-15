@@ -16,6 +16,10 @@ public record CreateProductRequest(
     @Size(max = 1000, message = "Product description must not exceed 1000 characters")
     String description,
 
+    @NotBlank(message = "Product SKU is required")
+    @Size(max = 100, message = "Product SKU must not exceed 100 characters")
+    String sku,
+
     @NotNull(message = "Product price is required")
     @DecimalMin(value = "0.01", message = "Product price must be greater than zero")
     BigDecimal price,

@@ -17,26 +17,29 @@ public class Product {
     private final UUID id;
     private final String name;
     private final String description;
+    private final String sku;
     private final BigDecimal price;
     private int stock;
     private final ProductStatus status;
 
-    public static Product create(String name, String description, BigDecimal price, int stock) {
+    public static Product create(String name, String description, String sku, BigDecimal price, int stock) {
         validatePrice(price);
         validateStock(stock);
+        validateSku(sku);
         return new Product(
             UUID.randomUUID(),
             name,
             description,
+            sku,
             price,
             stock,
             ProductStatus.ACTIVE
         );
     }
 
-    public static Product reconstitute(UUID id, String name, String description, BigDecimal price,
+    public static Product reconstitute(UUID id, String name, String description, String sku, BigDecimal price,
                                        int stock, ProductStatus status) {
-        return new Product(id, name, description, price, stock, status);
+        return new Product(id, name, description, sku, price, stock, status);
     }
 
     private static void validatePrice(BigDecimal price) {
@@ -48,6 +51,12 @@ public class Product {
     private static void validateStock(int stock) {
         if (stock < 0) {
             throw new InvalidProductStockException("Product stock cannot be negative");
+        }
+    }
+
+    private static void validateSku(String sku) {
+        if (sku == null || sku.trim().isEmpty()) {
+            throw new IllegalArgumentException("Product SKU cannot be null or empty");
         }
     }
 

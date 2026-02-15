@@ -48,4 +48,10 @@ public class ProductPersistenceAdapter implements ProductPersistencePort {
         return jpaProductRepository.findByStatus(productStatus)
             .stream().map(mapper::toDomain).collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsBySku(String sku) {
+        return jpaProductRepository.existsBySku(sku);
+    }
 }

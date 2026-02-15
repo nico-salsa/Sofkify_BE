@@ -52,6 +52,14 @@ public class GlobalExceptionHandler {
                 .body(ErrorDtoFactory.build(HttpStatus.BAD_REQUEST, ex.getMessage(), request));
     }
 
+    @ExceptionHandler(DuplicateSkuException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateSkuException(
+            DuplicateSkuException ex, WebRequest request) {
+        log.warn("Duplicate SKU: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorDtoFactory.build(HttpStatus.CONFLICT, ex.getMessage(), request));
+    }
+
     // Validation Exceptions
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(

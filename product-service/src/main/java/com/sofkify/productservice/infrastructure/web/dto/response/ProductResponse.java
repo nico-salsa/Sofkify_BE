@@ -9,6 +9,7 @@ public record ProductResponse(
     UUID productId,
     String name,
     String description,
+    String sku,
     BigDecimal price,
     Integer stock,
     ProductStatus status
