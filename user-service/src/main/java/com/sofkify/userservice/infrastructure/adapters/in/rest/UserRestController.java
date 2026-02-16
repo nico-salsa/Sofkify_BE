@@ -4,6 +4,7 @@ import com.sofkify.userservice.application.dto.*;
 import com.sofkify.userservice.application.exception.UserNotFoundException;
 import com.sofkify.userservice.domain.model.User;
 import com.sofkify.userservice.domain.ports.in.UserServicePort;
+import com.sofkify.userservice.infrastructure.mapper.LoginResponseMapper;
 import com.sofkify.userservice.infrastructure.mapper.UserMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -18,10 +19,12 @@ public class UserRestController {
 
     private final UserServicePort userService;
     private final UserMapper userMapper;
+    private final LoginResponseMapper loginResponseMapper;
 
-    public UserRestController(UserServicePort userService, UserMapper userMapper) {
+    public UserRestController(UserServicePort userService, UserMapper userMapper, LoginResponseMapper loginResponseMapper) {
         this.userService = userService;
         this.userMapper = userMapper;
+        this.loginResponseMapper = loginResponseMapper;
     }
 
     @PostMapping
@@ -83,14 +86,7 @@ public class UserRestController {
 
         // 3. Login exitoso
         User user = userOpt.get();
-        LoginResponse response = new LoginResponse(
-                true,
-                "Login exitoso",
-                user.getId(),
-                user.getEmail(),
-                user.getName(),
-                user.getRole().name()
-        );
+        LoginResponse response = loginResponseMapper.toDto(user);
 
         return ResponseEntity.ok(response);
     }
