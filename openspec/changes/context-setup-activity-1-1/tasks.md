@@ -12,5 +12,5 @@
 
 ## 3. Delivery
 
-- [ ] 3.1 Preparar commit convencional para artefactos de contexto del backend
-- [ ] 3.2 Publicar cambios en el remoto fork del backend
+- [x] 3.1 Preparar commit convencional para artefactos de contexto del backend
+- [x] 3.2 Publicar cambios en el remoto fork del backend
