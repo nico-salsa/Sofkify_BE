@@ -28,6 +28,7 @@
   - Exchange: `order.exchange`
   - Routing key: `order.created`
   - Queue: `product.stock.decrement.queue`
+- Each microservice owns its own database/schema. Never couple services through direct DB access.
 
 ## Business Rules to Preserve
 - Users must be registered to operate.
@@ -51,4 +52,4 @@
 ## Out of Scope
 - Do not introduce payment, shipping, or invoicing logic unless explicitly requested.
 - Do not add service discovery/config server patterns unless explicitly requested.
-
+- Do not change runtime API contracts or message contracts as part of context-only tasks.
