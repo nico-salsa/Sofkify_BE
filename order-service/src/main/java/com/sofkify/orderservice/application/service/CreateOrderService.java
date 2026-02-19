@@ -35,6 +35,18 @@ public class CreateOrderService implements CreateOrderFromCartUseCase {
         this.eventPublisherPort = eventPublisherPort;
     }
 
+    /**
+     * Creates an order from an existing cart and publishes an order-created event.
+     *
+     * <p>The method ensures cart uniqueness at order level, validates cart existence and
+     * non-empty items, persists the new order, and notifies downstream consumers via RabbitMQ.</p>
+     *
+     * @param cartId source cart identifier
+     * @return persisted order
+     * @throws OrderAlreadyExistsException when an order already exists for the given cart
+     * @throws CartNotFoundException when the cart cannot be fetched from cart-service
+     * @throws InvalidCartException when the cart has no items
+     */
     @Override
     public Order createOrderFromCart(UUID cartId) {
         // Verificar si ya existe una orden para este carrito
@@ -91,6 +103,12 @@ public class CreateOrderService implements CreateOrderFromCartUseCase {
         return savedOrder;
     }
 
+    /**
+     * Maps an item returned by cart-service into the order domain item model.
+     *
+     * @param cartItem cart-service DTO item
+     * @return order item instance
+     */
     private OrderItem cartItemToOrderItem(CartItemResponse cartItem) {
         return new OrderItem(
                 UUID.randomUUID(),

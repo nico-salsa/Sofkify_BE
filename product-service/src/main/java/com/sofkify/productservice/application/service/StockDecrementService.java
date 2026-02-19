@@ -21,6 +21,12 @@ public class StockDecrementService implements HandleOrderCreatedUseCase {
     private static final Logger logger = LoggerFactory.getLogger(StockDecrementService.class);
     private final ProductPersistencePort productPersistencePort;
 
+    /**
+     * Processes an order-created event by decrementing stock for each ordered item.
+     *
+     * @param event order-created payload with ordered items
+     * @throws RuntimeException when any item cannot be processed
+     */
     @Override
     public void handleOrderCreated(OrderCreatedEventDTO event) {
         logger.info("Handling OrderCreatedEvent for order: {}", event.orderId());
@@ -42,6 +48,15 @@ public class StockDecrementService implements HandleOrderCreatedUseCase {
         }
     }
 
+    /**
+     * Decrements stock for one product item in the order.
+     *
+     * @param productId product identifier
+     * @param quantity amount to decrement
+     * @param orderId order identifier used for trace logging
+     * @throws ProductNotFoundException when the product does not exist
+     * @throws InsufficientStockException when available stock is lower than requested quantity
+     */
     private void decrementStock(UUID productId, int quantity, UUID orderId) {
         logger.debug("Decrementing {} units for product: {} (order: {})", quantity, productId, orderId);
 
