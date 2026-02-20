@@ -62,15 +62,6 @@ public class CartItem {
     public int getQuantity() { return quantity; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    
-    // Value object adapters for domain events
-    public com.sofkify.cartservice.domain.valueobject.Money getMoneyPrice() {
-        return new com.sofkify.cartservice.domain.valueobject.Money(productPrice);
-    }
-    
-    public com.sofkify.cartservice.domain.valueobject.Quantity getValueObjectQuantity() {
-        return new com.sofkify.cartservice.domain.valueobject.Quantity(quantity);
-    }
 
     @Override
     public boolean equals(Object o) {
