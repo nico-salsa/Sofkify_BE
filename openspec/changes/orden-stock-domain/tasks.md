@@ -12,24 +12,24 @@
 
 - [x] 2.1 Create OrderCreatedEvent domain event test (RED)
 - [x] 2.2 Create CartConfirmedEvent domain event test (RED) 
-- [ ] 2.3 Create DomainEventPublisher interface test (RED)
-- [ ] 2.4 Create event correlation and metadata tests (RED)
+- [x] 2.3 Create DomainEventPublisher interface test (RED)
+- [x] 2.4 Create event correlation and metadata tests (RED)
 
 ## 3. Use Cases and Ports Definition (TDD Red Phase)
 
-- [ ] 3.1 Create ConfirmCartUseCase interface test (RED)
-- [ ] 3.2 Create StockValidationPort interface test (RED)
-- [ ] 3.3 Create OrderEventPublisher port test (RED)
-- [ ] 3.4 Create CartRepository port test (RED)
-- [ ] 3.5 Create OrderRepository port test (RED)
+- [x] 3.1 Create ConfirmCartUseCase interface test (RED)
+- [x] 3.2 Create StockValidationPort interface test (RED)
+- [x] 3.3 Create OrderEventPublisher port test (RED)
+- [x] 3.4 Create CartRepository port test (RED)
+- [x] 3.5 Create OrderRepository port test (RED)
 
 ## 4. Domain Logic Implementation (TDD Green Phase)
 
-- [ ] 4.1 Implement Cart.confirm() with stock validation (GREEN)
-- [ ] 4.2 Implement Order creation from confirmed cart (GREEN)
-- [ ] 4.3 Implement Money calculations and validations (GREEN)
-- [ ] 4.4 Implement domain events generation (GREEN)
-- [ ] 4.5 Implement domain exceptions with proper messages (GREEN)
+- [x] 4.1 Implement Cart.confirm() with stock validation (GREEN)
+- [x] 4.2 Implement Order creation from confirmed cart (GREEN)
+- [x] 4.3 Implement Money calculations and validations (GREEN)
+- [x] 4.4 Implement domain events generation (GREEN)
+- [x] 4.5 Implement domain exceptions with proper messages (GREEN)
 
 ## 5. Use Case Services (TDD Green Phase)
 
