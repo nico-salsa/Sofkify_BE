@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts
+target/
+build/
+.gradle/
+*.gradle.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+docs/
+docs_IA/
+
+# Gradle wrapper (cached)
+.gradle/
+gradlew
+gradlew.bat
+gradle/
+
+# Test results
+test-results/

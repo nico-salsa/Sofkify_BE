@@ -2,8 +2,10 @@
 CREATE DATABASE sofkify_users;
 CREATE DATABASE sofkify_products_bd;
 CREATE DATABASE sofkify_cars_bd;
+CREATE DATABASE sofkify_orders_bd;
 
 -- Dar permisos al usuario postgres
 GRANT ALL PRIVILEGES ON DATABASE sofkify_users TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE sofkify_products_bd TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE sofkify_cars_bd TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE sofkify_orders_bd TO postgres;
