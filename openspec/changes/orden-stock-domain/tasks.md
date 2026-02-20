@@ -40,10 +40,10 @@
 
 ## 6. Domain Idempotency (TDD Cycles)
 
-- [ ] 6.1 Create ProcessedEvent entity test (RED)
-- [ ] 6.2 Create IdempotencyService interface test (RED)
-- [ ] 6.3 Implement ProcessedEvent with event ID tracking (GREEN)
-- [ ] 6.4 Implement IdempotencyService with duplicate detection (GREEN)
+- [x] 6.1 Create ProcessedEvent entity test (RED)
+- [x] 6.2 Create IdempotencyService interface test (RED)
+- [x] 6.3 Implement ProcessedEvent with event ID tracking (GREEN)
+- [x] 6.4 Implement IdempotencyService with duplicate detection (GREEN)
 - [ ] 6.5 Refactor idempotency logic for clean separation (REFACTOR)
 
 ## 7. Edge Cases and Validations (TDD Cycles)
