@@ -79,4 +79,23 @@ class CreateOrderServiceTest {
             ((OrderCreatedEvent) event).getCartId().equals(cartId)
         ));
     }
+
+    @Test
+    @DisplayName("Should prevent duplicate orders for same cart (idempotency)")
+    void shouldPreventDuplicateOrders() {
+        // Given
+        UUID cartId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        
+        CreateOrderRequest request = new CreateOrderRequest(cartId, customerId);
+        
+        when(orderRepository.existsByCartId(cartId)).thenReturn(true);
+        
+        // When / Then
+        assertThrows(IllegalStateException.class, () -> service.execute(request));
+        
+        verify(orderRepository).existsByCartId(cartId);
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(eventPublisher, never()).publish(any(OrderCreatedEvent.class));
+    }
 }

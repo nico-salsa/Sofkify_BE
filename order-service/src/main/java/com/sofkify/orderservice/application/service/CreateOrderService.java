@@ -28,6 +28,11 @@ public class CreateOrderService implements CreateOrderUseCase {
     public CreateOrderResponse execute(CreateOrderRequest request) {
         Objects.requireNonNull(request, "Request cannot be null");
         
+        // Idempotency check: prevent duplicate orders for same cart
+        if (orderRepository.existsByCartId(request.getCartId())) {
+            throw new IllegalStateException("Order already exists for cart: " + request.getCartId());
+        }
+        
         // For minimal GREEN implementation, create order with empty items
         // In real scenario, service would fetch cart items via CartServicePort
         java.util.List<com.sofkify.orderservice.domain.model.OrderItem> items = new ArrayList<>();
