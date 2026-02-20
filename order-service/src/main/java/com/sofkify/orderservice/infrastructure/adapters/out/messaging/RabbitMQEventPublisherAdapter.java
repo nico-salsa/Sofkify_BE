@@ -37,7 +37,7 @@ public class RabbitMQEventPublisherAdapter implements EventPublisherPort {
      * @throws RuntimeException when serialization fails or message publishing fails
      */
     @Override
-    public void publishOrderCreated(OrderCreatedEvent event) {
+    public void publish(OrderCreatedEvent event) {
         try {
             String eventJson = objectMapper.writeValueAsString(event);
             logger.info("Publishing OrderCreatedEvent: {}", event.getOrderId());

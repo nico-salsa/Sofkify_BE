@@ -33,7 +33,7 @@
 
 ## 5. Use Case Services (TDD Green Phase)
 
-- [ ] 5.1 Implement ConfirmCartService coordinating the flow (GREEN)
+- [x] 5.1 Implement ConfirmCartService coordinating the flow (GREEN)
 - [ ] 5.2 Implement order creation service (GREEN)
 - [ ] 5.3 Implement event publishing coordination (GREEN)
 - [ ] 5.4 Implement idempotency checking logic (GREEN)
