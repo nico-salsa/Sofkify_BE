@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Exception thrown when there is insufficient stock to fulfill a cart confirmation.
  */
-public class InsufficientStockException extends RuntimeException {
+public class InsufficientStockException extends CartException {
     
     private final UUID productId;
     private final Integer requestedQuantity;
