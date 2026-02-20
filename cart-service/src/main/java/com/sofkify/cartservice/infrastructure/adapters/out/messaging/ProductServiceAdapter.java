@@ -20,6 +20,13 @@ public class ProductServiceAdapter implements ProductServicePort {
         this.productServiceUrl = productServiceUrl;
     }
 
+    /**
+     * Fetches product details from product-service.
+     *
+     * @param productId product identifier
+     * @return product info used by cart domain rules
+     * @throws RuntimeException when the product cannot be retrieved
+     */
     @Override
     public ProductInfo getProduct(UUID productId) {
         try {
@@ -42,6 +49,13 @@ public class ProductServiceAdapter implements ProductServicePort {
         }
     }
 
+    /**
+     * Validates if requested quantity is available for a product.
+     *
+     * @param productId product identifier
+     * @param requiredQuantity quantity requested by cart operation
+     * @return {@code true} when stock is enough; {@code false} otherwise
+     */
     @Override
     public boolean validateStock(UUID productId, int requiredQuantity) {
         try {

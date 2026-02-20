@@ -19,6 +19,15 @@ public class RabbitMQOrderCreatedConsumer {
     private final ObjectMapper objectMapper;
     private final HandleOrderCreatedUseCase handleOrderCreatedUseCase;
 
+    /**
+     * RabbitMQ listener entrypoint for order-created messages.
+     *
+     * <p>The raw JSON payload is deserialized into {@link OrderCreatedEventDTO} and delegated
+     * to the application use case.</p>
+     *
+     * @param message raw message payload from queue
+     * @throws RuntimeException when payload parsing or downstream processing fails
+     */
     @RabbitListener(queues = "${rabbitmq.queues.stock-decrement}")
     public void handleOrderCreated(String message) {
         logger.info("Received OrderCreatedEvent message: {}", message);

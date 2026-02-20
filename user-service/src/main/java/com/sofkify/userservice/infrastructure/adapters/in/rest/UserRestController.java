@@ -58,6 +58,12 @@ public class UserRestController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Promotes an existing user to admin role.
+     *
+     * @param id user identifier
+     * @return updated user response with admin role
+     */
     @PostMapping("/{id}/promote")
     public ResponseEntity<UserResponse> promoteToAdmin(@PathVariable String id) {
         User promotedUser = userService.promoteToAdmin(id);
