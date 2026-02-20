@@ -1,5 +1,11 @@
 package com.sofkify.cartservice.domain.model;
 
+import com.sofkify.cartservice.domain.event.CartConfirmedEvent;
+import com.sofkify.cartservice.domain.event.DomainEvent;
+import com.sofkify.cartservice.domain.exception.CartAlreadyConfirmedException;
+import com.sofkify.cartservice.domain.exception.InsufficientStockException;
+import com.sofkify.cartservice.domain.ports.out.StockValidationPort;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,6 +22,7 @@ public class Cart {
     private final List<CartItem> items;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     public Cart(UUID id, UUID customerId) {
         this.id = Objects.requireNonNull(id, "Cart ID cannot be null");
@@ -73,6 +80,53 @@ public class Cart {
         return items.stream()
             .filter(item -> item.getProductId().equals(productId))
             .findFirst();
+    }
+    
+    /**
+     * Confirms the cart after validating stock availability for all items.
+     * Transitions cart status from ACTIVE to CONFIRMED.
+     * 
+     * @param stockValidator port to validate stock availability
+     * @throws CartAlreadyConfirmedException if cart is already confirmed
+     * @throws InsufficientStockException if any item has insufficient stock
+     */
+    public void confirm(StockValidationPort stockValidator) {
+        Objects.requireNonNull(stockValidator, "Stock validator cannot be null");
+        
+        // Validate current status
+        if (this.status == CartStatus.CONFIRMED) {
+            throw new CartAlreadyConfirmedException(this.id);
+        }
+        
+        // Validate stock for all items
+        for (CartItem item : this.items) {
+            boolean stockAvailable = stockValidator.isStockAvailable(item.getProductId(), item.getQuantity());
+            if (!stockAvailable) {
+                throw new InsufficientStockException(item.getProductId());
+            }
+        }
+        
+        // Transition to confirmed status
+        this.status = CartStatus.CONFIRMED;
+        this.updatedAt = LocalDateTime.now();
+        
+        // Publish domain event
+        BigDecimal totalAmount = calculateTotal();
+        this.domainEvents.add(new CartConfirmedEvent(this.id, this.customerId, this.items, totalAmount));
+    }
+
+    public List<DomainEvent> getDomainEvents() {
+        return Collections.unmodifiableList(domainEvents);
+    }
+
+    public void clearDomainEvents() {
+        domainEvents.clear();
+    }
+
+    public BigDecimal calculateTotal() {
+        return items.stream()
+                .map(CartItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     // Getters

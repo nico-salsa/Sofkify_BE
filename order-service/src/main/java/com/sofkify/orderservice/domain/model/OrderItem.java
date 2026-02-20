@@ -1,5 +1,8 @@
 package com.sofkify.orderservice.domain.model;
 
+import com.sofkify.orderservice.domain.valueobject.Money;
+import com.sofkify.orderservice.domain.valueobject.Quantity;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -9,40 +12,56 @@ public class OrderItem {
     private final UUID id;
     private final UUID productId;
     private final String productName;
-    private final BigDecimal productPrice;
-    private final int quantity;
-    private final BigDecimal subtotal;
+    private final Money unitPrice;
+    private final Quantity quantity;
+    private final Money subtotal;
     private final LocalDateTime createdAt;
 
-    public OrderItem(UUID id, UUID productId, String productName, BigDecimal productPrice, int quantity) {
+    public OrderItem(UUID id, UUID productId, String productName, Money unitPrice, Quantity quantity) {
         this.id = Objects.requireNonNull(id, "Order item ID cannot be null");
         this.productId = Objects.requireNonNull(productId, "Product ID cannot be null");
         this.productName = Objects.requireNonNull(productName, "Product name cannot be null");
-        this.productPrice = Objects.requireNonNull(productPrice, "Product price cannot be null");
+        this.unitPrice = Objects.requireNonNull(unitPrice, "Unit price cannot be null");
+        this.quantity = Objects.requireNonNull(quantity, "Quantity cannot be null");
         
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
-        }
-        if (productPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Product price must be greater than zero");
-        }
         if (productName.trim().isEmpty()) {
             throw new IllegalArgumentException("Product name cannot be empty");
         }
         
-        this.quantity = quantity;
-        this.subtotal = productPrice.multiply(BigDecimal.valueOf(quantity));
+        this.subtotal = unitPrice.multiply(quantity.value());
         this.createdAt = LocalDateTime.now();
+    }
+
+    // Constructor legacy para compatibilidad con BigDecimal y int
+    public OrderItem(UUID id, UUID productId, String productName, BigDecimal productPrice, int quantity) {
+        this(id, productId, productName, new Money(productPrice), new Quantity(quantity));
+    }
+
+    // Factory method para crear desde CartItem
+    public static OrderItem fromCartItem(UUID orderItemId, Object cartItem) {
+        // TODO: Implementar cuando CartItem esté disponible
+        // Por ahora, devolver un OrderItem de prueba
+        return new OrderItem(
+            orderItemId,
+            UUID.randomUUID(), // productId temporal
+            "Test Product",    // productName temporal
+            new Money(BigDecimal.TEN), // unitPrice temporal
+            new Quantity(1)    // quantity temporal
+        );
     }
 
     // Getters
     public UUID getId() { return id; }
     public UUID getProductId() { return productId; }
     public String getProductName() { return productName; }
-    public BigDecimal getProductPrice() { return productPrice; }
-    public int getQuantity() { return quantity; }
-    public BigDecimal getSubtotal() { return subtotal; }
+    public Money getUnitPrice() { return unitPrice; }
+    public Quantity getQuantity() { return quantity; }
+    public Money getSubtotal() { return subtotal; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    
+    // Getters legacy para compatibilidad
+    public BigDecimal getProductPrice() { return unitPrice.amount(); }
+    public int getQuantityValue() { return quantity.value(); }
 
     @Override
     public boolean equals(Object o) {
