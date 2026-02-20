@@ -41,7 +41,7 @@ public class Order {
 
     private BigDecimal calculateTotalAmount() {
         return items.stream()
-                .map(OrderItem::getSubtotal)
+                .map(item -> item.getSubtotal().amount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

@@ -133,9 +133,9 @@ public class OrderController {
                 item.getId(),
                 item.getProductId(),
                 item.getProductName(),
-                item.getProductPrice(),
-                item.getQuantity(),
-                item.getSubtotal(),
+                item.getUnitPrice().amount(),
+                item.getQuantity().value(),
+                item.getSubtotal().amount(),
                 item.getCreatedAt()
         );
     }

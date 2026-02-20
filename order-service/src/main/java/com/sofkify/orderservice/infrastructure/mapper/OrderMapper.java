@@ -40,10 +40,10 @@ public class OrderMapper {
         itemJpaEntity.setId(orderItem.getId());
         itemJpaEntity.setProductId(orderItem.getProductId());
         itemJpaEntity.setProductName(orderItem.getProductName());
-        itemJpaEntity.setProductPrice(orderItem.getProductPrice());
-        itemJpaEntity.setQuantity(orderItem.getQuantity());
-        itemJpaEntity.setSubtotal(orderItem.getSubtotal());
-        itemJpaEntity.setTotalAmount(orderItem.getSubtotal()); // total_amount = subtotal para items individuales
+        itemJpaEntity.setProductPrice(orderItem.getUnitPrice().amount());
+        itemJpaEntity.setQuantity(orderItem.getQuantity().value());
+        itemJpaEntity.setSubtotal(orderItem.getSubtotal().amount());
+        itemJpaEntity.setTotalAmount(orderItem.getSubtotal().amount()); // total_amount = subtotal para items individuales
         itemJpaEntity.setCreatedAt(orderItem.getCreatedAt());
         itemJpaEntity.setUpdatedAt(orderItem.getCreatedAt()); // Para items inmutables, updatedAt = createdAt
         return itemJpaEntity;
