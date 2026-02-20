@@ -63,12 +63,12 @@ public class CartItem {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     
-    // Compatibility methods for domain events
-    public com.sofkify.cartservice.domain.valueobject.Money getPrice() {
+    // Value object adapters for domain events
+    public com.sofkify.cartservice.domain.valueobject.Money getMoneyPrice() {
         return new com.sofkify.cartservice.domain.valueobject.Money(productPrice);
     }
     
-    public com.sofkify.cartservice.domain.valueobject.Quantity getQuantityAsValueObject() {
+    public com.sofkify.cartservice.domain.valueobject.Quantity getValueObjectQuantity() {
         return new com.sofkify.cartservice.domain.valueobject.Quantity(quantity);
     }
 

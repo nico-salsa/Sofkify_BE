@@ -36,18 +36,28 @@ public record Quantity(int value) {
     }
 
     public boolean isGreaterThan(Quantity other) {
-        Objects.requireNonNull(other, "Other quantity cannot be null");
-        return this.value > other.value;
+        return compareTo(other) > 0;
     }
 
     public boolean isLessThan(Quantity other) {
-        Objects.requireNonNull(other, "Other quantity cannot be null");
-        return this.value < other.value;
+        return compareTo(other) < 0;
     }
 
-    public boolean equals(Quantity other) {
+    public boolean isEqualTo(Quantity other) {
+        return compareTo(other) == 0;
+    }
+
+    public boolean isGreaterThanOrEqualTo(Quantity other) {
+        return compareTo(other) >= 0;
+    }
+
+    public boolean isLessThanOrEqualTo(Quantity other) {
+        return compareTo(other) <= 0;
+    }
+
+    private int compareTo(Quantity other) {
         Objects.requireNonNull(other, "Other quantity cannot be null");
-        return this.value == other.value;
+        return Integer.compare(this.value, other.value);
     }
 
     public static Quantity one() {

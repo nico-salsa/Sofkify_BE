@@ -18,29 +18,27 @@ public class OrderCreatedEvent implements DomainEvent {
     private final List<OrderItemEvent> items;
     private final BigDecimal totalAmount;
 
-    // Constructor principal que usa Order
     public OrderCreatedEvent(UUID orderId, UUID cartId, UUID customerId, BigDecimal totalAmount, List<OrderItem> orderItems) {
-        this.eventId = UUID.randomUUID();
-        this.occurredOn = LocalDateTime.now();
-        this.orderId = Objects.requireNonNull(orderId, "Order ID cannot be null");
-        this.customerId = Objects.requireNonNull(customerId, "Customer ID cannot be null");
-        this.cartId = Objects.requireNonNull(cartId, "Cart ID cannot be null");
-        this.totalAmount = Objects.requireNonNull(totalAmount, "Total amount cannot be null");
-        this.items = convertToOrderItemEvents(orderItems);
+        this(UUID.randomUUID(), LocalDateTime.now(), orderId, cartId, customerId, totalAmount, convertToOrderItemEvents(orderItems));
     }
 
     // Constructor legacy para mantener compatibilidad
     public OrderCreatedEvent(UUID orderId, UUID customerId, UUID cartId, List<OrderItemEvent> items, BigDecimal totalAmount, LocalDateTime createdAt) {
-        this.eventId = UUID.randomUUID();
-        this.occurredOn = createdAt != null ? createdAt : LocalDateTime.now();
-        this.orderId = orderId;
-        this.customerId = customerId;
-        this.cartId = cartId;
-        this.items = items;
-        this.totalAmount = totalAmount;
+        this(UUID.randomUUID(), createdAt != null ? createdAt : LocalDateTime.now(), orderId, cartId, customerId, totalAmount, items);
     }
 
-    private List<OrderItemEvent> convertToOrderItemEvents(List<OrderItem> orderItems) {
+    // Constructor interno para evitar duplicación
+    private OrderCreatedEvent(UUID eventId, LocalDateTime occurredOn, UUID orderId, UUID cartId, UUID customerId, BigDecimal totalAmount, List<OrderItemEvent> items) {
+        this.eventId = eventId;
+        this.occurredOn = occurredOn;
+        this.orderId = Objects.requireNonNull(orderId, "Order ID cannot be null");
+        this.customerId = Objects.requireNonNull(customerId, "Customer ID cannot be null");
+        this.cartId = Objects.requireNonNull(cartId, "Cart ID cannot be null");
+        this.totalAmount = Objects.requireNonNull(totalAmount, "Total amount cannot be null");
+        this.items = Objects.requireNonNull(items, "Items cannot be null");
+    }
+
+    private static List<OrderItemEvent> convertToOrderItemEvents(List<OrderItem> orderItems) {
         return orderItems.stream()
                 .map(item -> new OrderItemEvent(
                     item.getProductId(),

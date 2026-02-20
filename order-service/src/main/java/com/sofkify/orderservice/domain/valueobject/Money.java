@@ -47,13 +47,24 @@ public record Money(BigDecimal amount) {
     }
 
     public boolean isGreaterThan(Money other) {
-        Objects.requireNonNull(other, "Other money cannot be null");
-        return this.amount.compareTo(other.amount) > 0;
+        return compareTo(other) > 0;
     }
 
     public boolean isLessThan(Money other) {
-        Objects.requireNonNull(other, "Other money cannot be null");  
-        return this.amount.compareTo(other.amount) < 0;
+        return compareTo(other) < 0;
+    }
+
+    public boolean isGreaterThanOrEqualTo(Money other) {
+        return compareTo(other) >= 0;
+    }
+
+    public boolean isLessThanOrEqualTo(Money other) {
+        return compareTo(other) <= 0;
+    }
+
+    private int compareTo(Money other) {
+        Objects.requireNonNull(other, "Other money cannot be null");
+        return this.amount.compareTo(other.amount);
     }
 
     public boolean isZero() {
