@@ -1,6 +1,7 @@
 package com.sofkify.cartservice.domain.ports.out;
 
 import com.sofkify.cartservice.domain.model.Cart;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,4 +34,19 @@ public interface CartRepository {
      * @return el carrito activo si existe, Optional.empty() en caso contrario
      */
     Optional<Cart> findActiveByCustomerId(UUID customerId);
+    
+    /**
+     * Busca todos los carritos por customer ID.
+     * 
+     * @param customerId el identificador del customer
+     * @return lista de carritos del customer
+     */
+    List<Cart> findByCustomerId(UUID customerId);
+    
+    /**
+     * Elimina un carrito por su ID.
+     * 
+     * @param cartId el identificador del carrito a eliminar
+     */
+    void deleteById(UUID cartId);
 }
