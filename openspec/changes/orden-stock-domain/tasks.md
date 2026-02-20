@@ -44,14 +44,14 @@
 - [x] 6.2 Create IdempotencyService interface test (RED)
 - [x] 6.3 Implement ProcessedEvent with event ID tracking (GREEN)
 - [x] 6.4 Implement IdempotencyService with duplicate detection (GREEN)
-- [ ] 6.5 Refactor idempotency logic for clean separation (REFACTOR)
+- [x] 6.5 Refactor idempotency logic for clean separation (REFACTOR)
 
 ## 7. Edge Cases and Validations (TDD Cycles)
 
-- [ ] 7.1 Test and implement cart status validation before confirm (RED→GREEN)
-- [ ] 7.2 Test and implement stock validation failure handling (RED→GREEN)
-- [ ] 7.3 Test and implement concurrent cart confirmation protection (RED→GREEN)
-- [ ] 7.4 Test and implement order event publishing retries (RED→GREEN)
+- [x] 7.1 Test and implement cart status validation before confirm (RED→GREEN)
+- [x] 7.2 Test and implement stock validation failure handling (RED→GREEN)
+- [x] 7.3 Test and implement concurrent cart confirmation protection (RED→GREEN)
+- [x] 7.4 Test and implement order event publishing retries (RED→GREEN)
 
 ## 8. Domain Refactoring and Clean Code
 

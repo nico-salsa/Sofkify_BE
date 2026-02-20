@@ -20,6 +20,7 @@ public class Cart {
     private final UUID customerId;
     private CartStatus status;
     private final List<CartItem> items;
+    private Long version; // Optimistic locking for concurrent updates
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private final List<DomainEvent> domainEvents = new ArrayList<>();
