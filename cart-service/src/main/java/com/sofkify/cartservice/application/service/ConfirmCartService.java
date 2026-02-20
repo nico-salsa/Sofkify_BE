@@ -32,30 +32,27 @@ public class ConfirmCartService implements ConfirmCartUseCase {
     public ConfirmCartResponse execute(ConfirmCartRequest request) {
         Objects.requireNonNull(request, "Request cannot be null");
         
-        try {
-            // Buscar el carrito
-            Cart cart = cartRepository.findById(request.getCartId())
-                    .orElseThrow(() -> new RuntimeException("Cart not found: " + request.getCartId()));
-            
-            // Validar que el carrito pertenezca al customer
-            if (!cart.getCustomerId().equals(request.getCustomerId())) {
-                return new ConfirmCartResponse(request.getCartId(), false, "Cart does not belong to customer");
-            }
-            
-            // Confirmar el carrito (esto valida stock y cambia estado)
-            cart.confirm(stockValidationPort);
-            
-            // Guardar el carrito confirmado
-            Cart savedCart = cartRepository.save(cart);
-            
-            // Publicar eventos de dominio
-            savedCart.getDomainEvents().forEach(eventPublisher::publish);
-            savedCart.clearDomainEvents();
-            
-            return new ConfirmCartResponse(savedCart.getId(), true, "Cart confirmed successfully");
-            
-        } catch (Exception e) {
-            return new ConfirmCartResponse(request.getCartId(), false, "Error confirming cart: " + e.getMessage());
+        // Buscar el carrito
+        Cart cart = cartRepository.findById(request.getCartId())
+                .orElseThrow(() -> new com.sofkify.cartservice.domain.exception.CartException(
+                    "Cart not found: " + request.getCartId()));
+        
+        // Validar que el carrito pertenezca al customer
+        if (!cart.getCustomerId().equals(request.getCustomerId())) {
+            throw new com.sofkify.cartservice.domain.exception.CartException(
+                "Cart does not belong to customer");
         }
+        
+        // Confirmar el carrito (esto valida stock y cambia estado)
+        cart.confirm(stockValidationPort);
+        
+        // Guardar el carrito confirmado
+        Cart savedCart = cartRepository.save(cart);
+        
+        // Publicar eventos de dominio
+        savedCart.getDomainEvents().forEach(eventPublisher::publish);
+        savedCart.clearDomainEvents();
+        
+        return new ConfirmCartResponse(savedCart.getId(), true, "Cart confirmed successfully");
     }
 }
