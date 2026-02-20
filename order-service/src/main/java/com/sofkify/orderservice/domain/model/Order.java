@@ -45,13 +45,18 @@ public class Order {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public static Order createFromCart(UUID orderId, UUID cartId, UUID customerId, List<Object> cartItems) {
-        // Por ahora, asumir que cartItems son similares a OrderItems
-        // En una implementación real, esto requeriría transformar CartItem -> OrderItem
-        List<OrderItem> orderItems = new ArrayList<>();
-        // TODO: Implementar transformación de CartItem a OrderItem cuando esté disponible
-        
-        return new Order(orderId, cartId, customerId, orderItems);
+    /**
+     * Factory method to create an Order from a confirmed cart.
+     * Auto-generates the order ID for idempotency support.
+     * 
+     * @param cartId The ID of the confirmed cart
+     * @param customerId The ID of the customer
+     * @param items List of order items from the cart
+     * @return New Order instance
+     */
+    public static Order createFromCart(UUID cartId, UUID customerId, List<OrderItem> items) {
+        UUID orderId = UUID.randomUUID();
+        return new Order(orderId, cartId, customerId, items);
     }
 
     public void updateStatus(OrderStatus newStatus) {
