@@ -30,6 +30,12 @@ public class RabbitMQEventPublisherAdapter implements EventPublisherPort {
         this.orderCreatedRoutingKey = orderCreatedRoutingKey;
     }
 
+    /**
+     * Serializes and publishes an {@link OrderCreatedEvent} to the configured exchange.
+     *
+     * @param event domain event to publish
+     * @throws RuntimeException when serialization fails or message publishing fails
+     */
     @Override
     public void publishOrderCreated(OrderCreatedEvent event) {
         try {

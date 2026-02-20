@@ -27,6 +27,15 @@ public class UserService implements UserServicePort {
         this.authenticationService = authenticationService;
     }
 
+    /**
+     * Creates a new active user after checking email uniqueness.
+     *
+     * @param email user email used as unique identifier
+     * @param password raw password that will be validated by the domain model
+     * @param name display name of the user
+     * @return persisted user instance
+     * @throws UserAlreadyExistsException when the email is already registered
+     */
     @Override
     public User createUser(String email, String password, String name) {
         // 1. Verificar si ya existe el email

@@ -27,6 +27,18 @@ public class AddItemToCartService implements AddItemToCartUseCase {
         this.userServicePort = userServicePort;
     }
 
+    /**
+     * Adds a product to the customer's active cart.
+     *
+     * <p>The flow validates customer status, product availability, and stock before mutating
+     * the cart. If the customer has no cart, a new cart is created.</p>
+     *
+     * @param customerId customer identifier
+     * @param productId product identifier
+     * @param quantity requested quantity to add
+     * @return updated persisted cart
+     * @throws CartException when customer/product validation fails or stock is insufficient
+     */
     @Override
     public Cart addItem(UUID customerId, UUID productId, int quantity) {
         

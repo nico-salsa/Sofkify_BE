@@ -21,6 +21,14 @@ public class RemoveItemFromCartService implements RemoveItemFromCartUseCase {
         this.cartRepository = cartRepository;
     }
 
+    /**
+     * Removes a specific cart item from the current customer's cart.
+     *
+     * @param customerId customer identifier used to locate the cart
+     * @param cartItemId cart item identifier to remove
+     * @return updated persisted cart
+     * @throws CartException when the cart or the item cannot be found
+     */
     @Override
     public Cart removeItemFromCart(UUID customerId, UUID cartItemId) {
         // Obtener el carrito del cliente
