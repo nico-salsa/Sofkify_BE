@@ -1,4 +1,4 @@
-## ADDED Requirements
+﻿## MODIFIED Requirements
 
 ### Requirement: Confirm active cart with stock validation
 The system SHALL validate stock availability and transition an ACTIVE cart to CONFIRMED state when confirmation is initiated through `POST /api/carts/{cartId}/confirm`. The confirmation process MUST be atomic, return explicit confirmation metadata, and reject invalid transitions deterministically.
@@ -22,3 +22,4 @@ The system SHALL validate stock availability and transition an ACTIVE cart to CO
 #### Scenario: Confirmation request is observable in logs
 - **WHEN** frontend triggers `POST /api/carts/{cartId}/confirm` in local integration mode
 - **THEN** request and outcome SHALL be visible in frontend and cart-service logs
+

@@ -9,10 +9,10 @@ COPY build.gradle settings.gradle ./
 COPY src ./src
 
 # Construir la aplicación (sin tests para optimizar)
-RUN ./gradlew build -x test
+RUN gradle build -x test --no-daemon
 
 # Etapa de runtime - imagen ligera con JRE
-FROM openjdk:21-jre-slim
+FROM eclipse-temurin:21-jre-jammy
 
 # Crear directorio de trabajo
 WORKDIR /app

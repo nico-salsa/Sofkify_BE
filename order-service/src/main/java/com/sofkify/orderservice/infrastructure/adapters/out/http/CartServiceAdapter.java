@@ -17,7 +17,7 @@ public class CartServiceAdapter implements CartServicePort {
     private final String cartServiceUrl;
 
     public CartServiceAdapter(RestTemplate restTemplate,
-                              @Value("${cart.service.url:http://localhost:8082}") String cartServiceUrl) {
+                              @Value("${cart.service.url:http://localhost:8083/api}") String cartServiceUrl) {
         this.restTemplate = restTemplate;
         this.cartServiceUrl = cartServiceUrl;
     }
@@ -26,7 +26,11 @@ public class CartServiceAdapter implements CartServicePort {
     public CartResponse getCartById(UUID cartId) {
         try {
             String url = cartServiceUrl + "/carts/" + cartId;
-            return restTemplate.getForObject(url, CartResponse.class);
+            CartResponse response = restTemplate.getForObject(url, CartResponse.class);
+            if (response == null) {
+                throw new CartNotFoundException(cartId);
+            }
+            return response;
         } catch (HttpClientErrorException.NotFound e) {
             throw new CartNotFoundException(cartId);
         } catch (Exception e) {

@@ -26,12 +26,16 @@ public class Cart {
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     public Cart(UUID id, UUID customerId) {
+        this(id, customerId, CartStatus.ACTIVE, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    public Cart(UUID id, UUID customerId, CartStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = Objects.requireNonNull(id, "Cart ID cannot be null");
         this.customerId = Objects.requireNonNull(customerId, "Customer ID cannot be null");
-        this.status = CartStatus.ACTIVE;
+        this.status = Objects.requireNonNull(status, "Cart status cannot be null");
         this.items = new ArrayList<>();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = Objects.requireNonNull(createdAt, "CreatedAt cannot be null");
+        this.updatedAt = Objects.requireNonNull(updatedAt, "UpdatedAt cannot be null");
     }
 
     public void addItem(UUID productId, String productName, BigDecimal productPrice, int quantity) {
