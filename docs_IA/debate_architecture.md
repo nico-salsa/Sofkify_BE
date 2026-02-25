@@ -1,867 +1,225 @@
-# 🏛️ DEBATE ARQUITECTÓNICO: Los 3 Dolores de Sofkify
-## Guía para Entender las Decisiones Arquitectónicas (Nivel Junior)
+# Sofkify — Debate Arquitectónico (3 Decisiones Estructurales)
 
-**Versión**: 1.0  
-**Fecha**: Febrero 2026  
-**Objetivo**: Que cualquier junior entienda por qué nuestro sistema necesita cambiar y cómo vamos a hacerlo
-
----
-
-## 📚 INTRODUCCIÓN: ¿Qué es un Debate Arquitectónico?
-
-Imagina que tienes que construir una casa:
-
-```
-Opción A: Una sola casa grande (monolítica)
-├─ Ventajas: Simple, todos viven juntos, menos complejidad
-└─ Desventajas: Si alguien se muda, afecta a todos
-
-Opción B: 4 casitas independientes (microservicios)
-├─ Ventajas: Cada uno es autónomo, pueden cambiar sin afectar a otros
-└─ Desventajas: Más complejo de coordinar, más infraestructura
-
-El "debate arquitectónico" es decidir cuál opción es mejor
-y explicar por qué, considerando el contexto actual y futuro.
-```
-
-En Sofkify, tenemos 3 decisiones grandes que debatir.
+**Versión:** 1.0  
+**Fecha:** Febrero 2026  
+**Autor:** Arquitectura / Plataforma  
+**Audiencia:** Equipo de ingeniería (énfasis en perfiles junior)  
+**Propósito:** Documentar, con criterio arquitectónico, tres decisiones estructurales necesarias para mejorar operabilidad, escalabilidad del equipo y estabilidad de contrato.
 
 ---
 
----
+## 0. Resumen ejecutivo
 
-## 🔴 DOLOR #1: El Monolítico de Microservicios
-### "Tenemos 4 servicios... pero todos en 1 repositorio"
+Sofkify presenta tres problemas sistémicos que hoy limitan la velocidad de entrega, elevan el riesgo operativo y diluyen la “fuente de verdad” del sistema:
 
----
+1) **Servicios acoplados por repositorio** (microservicios en un solo repo)  
+→ Fricción de Git, builds innecesarios, dependencia accidental entre dominios, dificultad de despliegue independiente.  
+**Decisión:** pasar a **multirepo** (1 repositorio por servicio).
 
-### ¿Cuál es el problema?
+2) **Ausencia de repositorio de plataforma** (no existe un “centro operativo” del sistema)  
+→ Documentación dispersa, orquestación fuera de lugar, pruebas E2E sin owner claro, onboarding lento.  
+**Decisión:** crear **sofkify-platform** como *single source of truth* (docs, orquestación, E2E, scripts).
 
-**Hoy, la estructura se ve así:**
+3) **Contrato de API inconsistente** (/api vs /api/v1)  
+→ Roturas por falta de convención única y falta de ruta de evolución.  
+**Decisión:** formalizar **/api/v1/** como contrato base para todos los servicios.
 
-```
-Sofkify_BE/ (UN repositorio)
-├── user-service/          ← Código de usuarios
-├── product-service/       ← Código de productos  
-├── cart-service/          ← Código de carrito
-├── order-service/         ← Código de órdenes
-├── docker-compose.yml
-├── build.gradle
-└── docs_IA/
-```
-
-**¿Qué duele?**
-
-Imagina que trabajas con un compañero en el mismo repositorio:
-
-```
-⏰ 10:00 AM - Tú haces cambios a product-service
-⏰ 10:05 AM - Tu compañero hace cambios a cart-service
-⏰ 10:10 AM - Intentas hacer push... 
-
-CONFLICTO DE GIT ❌
-Git no sabe cómo mezclar tus cambios con los de él
-Pasas 2 horas resolviendo merge conflicts
-```
-
-Ahora multiplica eso por 5 desarrolladores y entenderás el dolor.
-
-### ¿Por qué sucede esto?
-
-Porque aunque tenemos **4 servicios conceptualmente separados** (user, product, cart, order),
-**comparten el mismo repositorio de Git**.
-
-Git piensa: *"Todo está en el mismo lugar, así que todo está conectado"*
-
-Esto crea problemas:
-
-| Problema | Ejemplo |
-|----------|---------|
-| **Merge Conflicts** | Dev A modifica product-service, Dev B modifica cart-service → Conflicto |
-| **Acoplamiento Invisible** | Alguien importa código de product-service dentro de cart-service (¡no debería hacer eso!) |
-| **Build Lento** | Cuando cambias 1 servicio, el sistema buildea TODOS |
-| **No Puedes Deployar Solo Un Servicio** | Quiero desplegar user-service hoy, pero product-service tiene un bug → Tengo que esperar |
-| **Imposible Escalar el Equipo** | Con 10 developers, los merge conflicts se vuelven caóticos |
+Estas tres decisiones son coherentes entre sí: separan responsabilidad (bounded contexts), centralizan coordinación del sistema y estabilizan contratos.
 
 ---
 
-### El Debate: ¿Monorepo o Multirepo?
+## 1. Contexto y estado actual
 
-#### 🟢 LADO A: "Mantengamos el Monorepo"
+Sofkify opera con cuatro servicios (user, product, cart, order) que se comunican por REST y mensajería, con bases de datos separadas. Sin embargo:
 
-**Argumentos:**
+- Los servicios viven dentro de un único repositorio.
+- Artefactos transversales (docker-compose, documentación, guías) viven mezclados con código de servicios.
+- No existe un repositorio explícito para coordinación de sistema.
+- El contrato de API no está estandarizado.
 
-```
-✓ Cambios atómicos (un commit = todo funciona junto)
-✓ Fácil ver dependencias entre servicios
-✓ Setup local simple (un solo git clone)
-✓ Para equipos pequeños (2-4 devs), es simple
-```
-
-**Ejemplo de cambio atómico:**
-```
-Commit: "Refactor OrderDTO"
-  ├─ order-service: nuevo DTO
-  ├─ cart-service: usa el nuevo DTO
-  └─ frontend: compatible con nuevo DTO
-  
-Todo en UN commit = Garantizado que funciona junto
-```
-
-**Casos famosos que usan monorepo:**
-- Google
-- Facebook
-- Uber
-
-**Pero**: Ellos usan herramientas especiales (Bazel, Pants, Nx) que nosotros NO tenemos.
+**Efecto neto:** se incrementa la fricción diaria y se reducen garantías de independencia real.
 
 ---
 
-#### 🔴 LADO B: "Ir a Multirepo (4 repositorios independientes)"
+## 2. Decisión 1 — De “monolito de microservicios” a Multirepo
 
-**Argumentos:**
+### 2.1 Problema
+Mantener múltiples servicios en un solo repositorio introduce acoplamientos operativos y técnicos:
 
-```
-✓ Cada servicio es independiente (no cruza conflictos)
-✓ Cada servicio puede deployarse por su cuenta
-✓ Podemos tener diferentes versiones de dependencias
-✓ Escala con el equipo (10 devs sin caos)
-✓ Es "más fuerte" el contrato entre servicios (REST, no imports)
-```
+- **Colisiones en Git:** el repositorio se convierte en un punto de contención.
+- **Builds/pipelines no aislados:** se ejecuta más de lo necesario, afectando tiempos de feedback.
+- **Acoplamiento accidental:** se facilita el “import” de código entre servicios (violación de límites).
+- **Despliegue condicionado:** el release de un servicio queda bloqueado por estado de otro.
 
-**Ejemplo de independencia:**
-```
-Hoy: Deploy de user-service en producción
-├─ Sin esperar que product-service esté listo
-├─ Sin esperar que cart-service esté listo
-└─ Totalmente independiente
-```
+### 2.2 Alternativas consideradas
 
-**Casos famosos que usan multirepo:**
-- Netflix
-- Airbnb
-- Shopify
+**A) Mantener monorepo**  
+Adecuado cuando existe disciplina estricta y tooling de monorepo (build graph, ownership, boundaries enforcement, pipelines selectivos). Sin ello, tiende a degradarse.
 
----
+**B) Migrar a multirepo**  
+Alineado con independencia por servicio y con un modelo operativo donde cada equipo/servicio puede versionar, construir y desplegar de forma autónoma.
 
-### 🏆 El Veredicto: ¿Cuál es Better?
+### 2.3 Decisión
+**Adoptar Multirepo**: un repositorio por servicio.
 
-**Para Sofkify: MULTIREPO es la respuesta.**
+Repositorios propuestos:
+- `sofkify-user-service`
+- `sofkify-product-service`
+- `sofkify-cart-service`
+- `sofkify-order-service`
 
-**¿Por qué?**
+### 2.4 Justificación
+- Los servicios **ya están diseñados como unidades autónomas** (DB separada, integración por APIs/eventos). El repositorio único contradice esa intención.
+- La fricción actual (conflictos + coordinación) **crece con el equipo** y afecta throughput.
+- Multirepo hace explícitos los límites y reduce la probabilidad de dependencia accidental.
 
-```
-1️⃣ YA ACTÚAN como microservicios
-   - Bases de datos separadas (sofkify_users, sofkify_products, etc)
-   - Se comunican por REST + RabbitMQ
-   - Pueden deployarse independientemente
+### 2.5 Principios arquitectónicos reforzados
+- **Bounded Contexts:** cada servicio encapsula su dominio.
+- **Dependencias explícitas:** integración solo vía contratos (HTTP/eventos), no vía imports.
+- **Autonomía operativa:** build, test, release por servicio.
 
-2️⃣ EL COSTO de fingir que son monolíticos es ALTO
-   - Merge conflicts constantes
-   - No puedes escalar el equipo
-   - Falsa sensación de "atómicos" que no existe realmente
+### 2.6 Criterios de aceptación
+- Cada servicio compila y ejecuta tests en aislamiento.
+- No existen dependencias de código compartido no versionado entre servicios.
+- El despliegue de un servicio no requiere sincronización de releases con otros (excepto cambios de contrato).
 
-3️⃣ NO TIENES el tooling para monorepo
-   - Monorepo sin Bazel/Pants = Monorepo frágil
-   - Mejor tener multirepo simple que monorepo roto
-```
-
----
-
-### 💰 Beneficios de Ir a Multirepo
-
-| Beneficio | Impacto Actual | Impacto Futuro |
-|-----------|--------------|--------------|
-| **Sin Merge Conflicts entre servicios** | Ahorra 2-3 horas/semana | Ahorra 10+ horas/semana con más devs |
-| **Deployment Independiente** | Puedes hacer deploy en cualquier momento | Puedes desplegar 4 servicios en paralelo |
-| **Equipos Autónomos** | Max 4-5 devs funcionan bien | Puedes crecer a 15-20 devs |
-| **Versionado Claro** | Cada servicio tiene su versión | Claro qué va a producción |
-| **Contrato Explícito** | Less risk de cambios ocultos | More seguridad en integraciones |
+### 2.7 Plan de migración (alto nivel)
+1. Separación de repos preservando historial (subtree/split).
+2. Ajuste de pipelines por servicio.
+3. Extracción de artefactos transversales a `sofkify-platform` (ver Decisión 2).
+4. Definición de ownership y convenciones (versionado, branching, releases).
 
 ---
 
-### 📋 Plan de Ejecución: Cómo Ir a Multirepo
+## 3. Decisión 2 — Crear repositorio de plataforma (sofkify-platform)
 
-**Semana 1: Preparación (1-2 personas, 40 horas)**
+### 3.1 Problema
+Hoy los artefactos transversales están dispersos (o ubicados donde no corresponde). Esto genera:
 
-```
-1. Crear 4 repositorios nuevos en GitHub:
-   ├─ sofkify-user-service
-   ├─ sofkify-product-service
-   ├─ sofkify-cart-service
-   └─ sofkify-order-service
+- **Ausencia de fuente de verdad:** documentación duplicada, desactualizada o contradictoria.
+- **Onboarding ineficiente:** no existe un punto único de entrada para entender y ejecutar el sistema.
+- **Orquestación sin owner:** docker-compose y scripts “viven” en repos que no representan al sistema completo.
+- **Pruebas E2E sin hogar natural:** se fragmenta la validación del flujo de negocio end-to-end.
 
-2. Copiar código preservando historial Git:
-   # Usar git subtree para preservar commits
-   git subtree split --prefix=user-service -b user-service-branch
-   
-   # Pasar al nuevo repo
-   git push https://github.com/sofkify/user-service user-service-branch:main
+### 3.2 Alternativas consideradas
 
-3. Actualizar referencias:
-   - docker-compose.yml apunta a 4 repos
-   - Actualizar URLs de cliente HTTP
-```
+**A) Mantener docs/orquestación en un repo existente (FE o un servicio)**  
+Mezcla responsabilidades: frontend no debe ser “centro operativo” del sistema; un servicio tampoco representa al sistema completo.
 
-**Semana 2-3: Testing (1 persona, 40 horas)**
+**B) Repositorio dedicado de plataforma**  
+Concentra coordinación, documentación oficial y pruebas de sistema. Es la estructura habitual cuando el sistema supera un único servicio y se requiere gobierno.
 
-```
-1. Verificar que cada servicio buildea independientemente
-   ./gradlew clean build  (en cada repo)
+### 3.3 Decisión
+**Crear `sofkify-platform`** como repositorio central para:
+- Documentación oficial (*single source of truth*).
+- Orquestación local (docker-compose) y scripts operativos.
+- Pruebas E2E / smoke tests del sistema completo.
+- Convenciones de gobierno (owners, estándares, runbooks).
 
-2. Verificar que levanta localmente
-   docker-compose up  (en cada repo)
+### 3.4 Estructura propuesta
 
-3. Tests de integración funcionan
-   Cada servicio llama a los otros via REST/RabbitMQ
-```
+sofkify-platform/
+├─ docs/
+│ ├─ ARCHITECTURE.md
+│ ├─ ONBOARDING.md
+│ ├─ API_CONTRACTS.md
+│ ├─ DEPLOYMENT.md
+│ └─ TROUBLESHOOTING.md
+├─ docker-compose.yml
+├─ scripts/
+│ ├─ setup.sh
+│ ├─ logs.sh
+│ └─ deploy.sh
+└─ tests/
+└─ e2e/
 
-**Semana 4: Team Training (2 horas con todo el equipo)**
 
-```
-- Explicar la nueva estructura
-- Mostrar cómo clonar/configurar cada repo
-- Crear scripts de setup local
-- Documentar workflow de cambios
-```
-
----
-
-### 🏛️ Cómo Encaja en Clean Architecture
-
-En Clean Architecture, hay un principio clave:
-
-```
-"El código de dominio nunca debe conocer cómo se entrega"
-```
-
-**Con Monorepo:**
-```
-OrderService (en order-service) 
-   ↓ (importa directamente)
-CartRepository (en cart-service)  ← ❌ Viola el principio
-                                     Los dominios están acoplados
-```
-
-**Con Multirepo:**
-```
-OrderService (en order-service)
-   ↓ (hace HTTP call)
-CartService REST endpoint ← ✅ Respeta los límites
-                             Cada dominio es independiente
-```
-
-**Principio de Clean Architecture respetado:**
-- Cada servicio es su propio "bounded context"
-- Límites claros (REST, no imports)
-- Independencia real, no fingida
+### 3.5 Criterios de aceptación
+- Un desarrollador nuevo puede levantar el sistema siguiendo `docs/ONBOARDING.md` sin intervención manual de terceros.
+- `docker-compose.yml` oficial vive en `sofkify-platform`.
+- Existe suite E2E mínima para flujos críticos (auth, catálogo, carrito, orden).
+- Las decisiones y convenciones se documentan y se mantienen versionadas.
 
 ---
 
----
+## 4. Decisión 3 — Formalizar contrato de API con `/api/v1`
 
-## 🔴 DOLOR #2: Ausencia de Repositorio "Platform"
-### "¿Dónde está el 'corazón' de nuestro sistema?"
+### 4.1 Problema
+La API presenta inconsistencias de rutas (p. ej. `/api/...` vs `/api/v1/...`), lo cual provoca:
 
----
+- Errores de integración y pérdida de tiempo de diagnóstico.
+- Ausencia de un contrato explícito: los cambios pueden romper clientes sin ruta de deprecación.
+- Dificultad para incorporar consumidores futuros (apps móviles, integraciones externas).
 
-### ¿Cuál es el problema?
+### 4.2 Alternativas consideradas
 
-Actualmente, la documentación y configuración están esparcidas:
+**A) Sin versionado**  
+Reducido overhead inicial, pero frágil ante cambios inevitables. Funciona únicamente con control estricto de compatibilidad y consumidores acoplados al release cadence.
 
-```
-sofkify-fe/ (Frontend)
-├─ README.md ← Documentación del frontend
-├─ instructions/
-│   ├─ AUDITORIA.md
-│   ├─ CALIDAD.md
-│   └─ DEUDA_TECNICA.md
-└─ ... código ...
+**B) Versionado por URL (`/api/v1`, `/api/v2`)**  
+Contrato explícito, ruta de evolución clara y mecanismo formal para gestionar breaking changes.
 
-Sofkify_BE/ (Backend)
-├─ docs_IA/
-│   ├─ architecture.md ← Pero ¿es la versión actual?
-│   ├─ context.md ← ¿Está sincronizada?
-│   ├─ events.md
-│   └─ DEUDA_TECNICA.md ← Misma doc en dos lugares!
-├─ HANDOVER_REPORT.md
-├─ README.md
-├─ docker-compose.yml ← Orquestación... ¿dónde?
-└─ ... código ...
+### 4.3 Decisión
+**Estandarizar `/api/v1/`** en todos los servicios como contrato base.
 
-😵 RESULTADO:
-- Documentación en 3 lugares diferentes
-- ¿Cuál es la verdad? Nadie sabe
-- Nuevo dev pierde 6+ horas buscando info
-- Inconsistencias entre doc del frontend y backend
-```
+### 4.4 Reglas de contrato (operativas)
+- Cambios compatibles se mantienen dentro de `v1`.
+- Cambios incompatibles se publican en `v2` manteniendo `v1` durante una ventana de transición definida.
+- El contrato debe estar documentado (idealmente OpenAPI) y validado en CI.
 
-### ¿Por qué es un problema?
+### 4.5 Plan de implementación (alto nivel)
+1. Backend: mover controladores a `/api/v1/...` en user/product/cart/order.
+2. Frontend: unificar todos los llamados a `/api/v1/...`.
+3. (Recomendado) Gateway: enrutar `/api/v1/*` y manejar deprecaciones de rutas legacy.
 
-**Escenario Real:**
-
-```
-Nuevo developer llega al equipo:
-
-⏰ 9:00 AM - "Hola, debo entender la arquitectura del sistema"
-
-⏰ 9:05 AM - Busca "architecture" en el repositorio
-   Encuentra: Sofkify_BE/docs_IA/architecture.md
-   
-⏰ 9:30 AM - Lee architecture.md
-   Dice: "Los eventos se publican en RabbitMQ"
-   
-⏰ 10:00 AM - Va a sofkify-fe, busca cómo integrar
-   No encuentra nada... busca en sofkify-fe/instructions/
-   
-⏰ 10:30 AM - Pregunta a un senior
-   Senior: "Oh, architecture.md está desactualizado
-            La verdad está en el CHATGPT que documenté ayer"
-   
-⏰ 12:00 PM - Finalmente entiende, después de 3 HORAS
-   Debería haber tomado 30 minutos
-```
-
-### El Debate: ¿Necesitamos un "Platform Repo"?
-
-#### 🟢 LADO A: "No necesitamos otro repositorio"
-
-**Argumentos:**
-
-```
-✓ Tenemos suficientes repos ya
-✓ Documentación puede estar en el README actual
-✓ Un repo más = más cosa que mantener
-✓ Menos es más (KISS: Keep It Simple, Stupid)
-```
-
-**Lógica:**
-- El frontend PUEDE servir como "centro de verdad"
-- O el backend PUEDE servir
-- ¿Para qué otro repo?
+### 4.6 Criterios de aceptación
+- No existen llamadas del frontend a rutas sin versión.
+- Todos los servicios exponen rutas consistentes bajo `/api/v1`.
+- El contrato está documentado y su estabilidad está protegida por tests (contract/E2E).
 
 ---
 
-#### 🔴 LADO B: "Sí necesitamos un 'Platform Repo'"
+## 5. Roadmap recomendado (MVP de arquitectura)
 
-**Argumentos:**
+- **Semana 1–2:** Multirepo (migración + builds independientes + CI básica por servicio).
+- **Semana 2–3:** Platform repo (docs + compose + scripts + punto de entrada).
+- **Semana 3–4:** API v1 (estandarización + pruebas + gateway opcional).
+- **Continuo:** madurar E2E, contract testing y observabilidad.
 
-```
-✓ Documentación CENTRALIZADA (single source of truth)
-✓ Configuración global de todos los servicios en UN lugar
-✓ Tests E2E (que tocan múltiples servicios) en UN lugar
-✓ Orquestación (docker-compose) en UN lugar
-✓ Observabilidad (logs, tracing, métricas) centralizada
-✓ Governance clara (CODEOWNERS, aprobaciones)
-```
-
-**Lógica:**
-- El frontend es frontend, no debería ser "el corazón"
-- El backend es uno de 4 servicios, no debería ser "el corazón"
-- Necesitas UN lugar donde "todo se conoce"
-
-**Analogía:**
-```
-Tu empresa tiene:
-- Oficina de producto
-- Oficina de contabilidad
-- Oficina de legal
-- Oficina de recursos humanos
-
-También necesitas: SEDECENTRAL donde se coordina todo
-
-Así mismo, en Sofkify:
-- user-service (su propio mundo)
-- product-service (su propio mundo)
-- cart-service (su propio mundo)
-- order-service (su propio mundo)
-- frontend (su propio mundo)
-
-Necesitas: sofkify-platform (sede central de coordinación)
-```
+> Nota: los tiempos dependen de cobertura de pruebas y complejidad de integración; la prioridad es asegurar criterios de aceptación y control de riesgo por fases.
 
 ---
 
-### 🏆 El Veredicto: SÍ, Crea el Platform Repo
+## 6. Riesgos y mitigaciones
 
-**¿Por qué?**
+- **Riesgo:** ruptura temporal del entorno local/CI durante la separación de repos.  
+  **Mitigación:** migración incremental por servicio; `sofkify-platform` se convierte en el runbook oficial.
 
-```
-1️⃣ YA EXISTE de facto
-   - docker-compose.yml existe (está en Sofkify_BE hoy)
-   - docs_IA/ existe (está en Sofkify_BE hoy)
-   - Pero están en el lugar "equivocado"
+- **Riesgo:** se evidencian dependencias implícitas entre servicios al separarlos.  
+  **Mitigación:** formalizar contratos (OpenAPI/event schemas) y eliminar imports directos.
 
-2️⃣ ESCALABILIDAD
-   - Con 1 servicio: OK estar en un repo
-   - Con 4 servicios: Confuso
-   - Con 10 servicios: Desastre
-   - Platform repo = Crece naturalmente
-
-3️⃣ SINGLE SOURCE OF TRUTH
-   - Sin platform repo: Verdad esparcida
-   - Con platform repo: Un lugar para buscar
-   - Juniors pueden onboardear RÁPIDO
-```
+- **Riesgo:** duplicación de utilidades compartidas.  
+  **Mitigación:** definir estrategia explícita: duplicación mínima vs librería compartida versionada y gobernada (evitar “shared” informal).
 
 ---
 
-### 💰 Beneficios de Crear Platform Repo
+## 7. Definiciones (mínimas)
 
-| Beneficio | Antes | Después |
-|-----------|------|---------|
-| **Documentación Centralizada** | Esparcida en 3 repos | Todo en sofkify-platform/docs/ |
-| **Onboarding Nuevo Dev** | 6+ horas buscando info | 2 horas (lee ONBOARDING.md) |
-| **Docker Compose** | ¿Dónde está? | sofkify-platform/docker-compose.yml |
-| **Tests E2E** | En frontend, pero también en backend? | Centralizados en sofkify-platform/tests/ |
-| **Deployment** | ¿Cómo hacemos deploy de TODO? | sofkify-platform/scripts/deploy.sh |
-| **Debugging** | Logs esparcidos en 4 servicios | Logs centralizados, trazas en Jaeger |
+- **Monorepo:** múltiples proyectos/servicios en un repositorio.
+- **Multirepo:** un repositorio por proyecto/servicio.
+- **Platform repo:** repositorio transversal para coordinación del sistema (docs, orquestación, E2E, runbooks).
+- **Contrato:** promesa de una interfaz (endpoints, requests/responses, eventos).
+- **Breaking change:** cambio que rompe consumidores existentes.
+- **Versionado de API:** mecanismo para evolucionar contratos sin romper integraciones.
 
 ---
 
-### 📋 Plan de Ejecución: Crear Platform Repo
+## 8. Conclusión
 
-**Semana 1: Creación (1 persona, 20 horas)**
+Las tres decisiones responden a un objetivo único: **hacer que Sofkify sea operable y escalable** a nivel de equipo y de sistema.
 
-```
-1. Crear repositorio sofkify-platform en GitHub
-   - Clonarlo, crear estructura base
+- Multirepo reduce fricción y refuerza límites reales.
+- Platform repo establece una fuente de verdad y habilita operación consistente.
+- `/api/v1` estabiliza el contrato e introduce un mecanismo formal de evolución.
 
-2. Estructura base:
-   sofkify-platform/
-   ├─ docs/
-   │  ├─ ARCHITECTURE.md (migrado de Sofkify_BE/docs_IA/)
-   │  ├─ ONBOARDING.md (nuevo)
-   │  ├─ API_CONTRACTS.md (nuevo)
-   │  ├─ DEPLOYMENT.md (nuevo)
-   │  └─ TROUBLESHOOTING.md (nuevo)
-   ├─ docker-compose.yml (migrado)
-   ├─ scripts/
-   │  ├─ deploy.sh
-   │  ├─ setup.sh (para devs locales)
-   │  └─ logs.sh (para debugging)
-   └─ README.md (punto de entrada)
-
-3. Actualizar Sofkify_BE/docker-compose.yml
-   - Que apunte a sofkify-platform
-```
-
-**Semana 2: Documentación (1 persona, 30 horas)**
-
-```
-1. Migrar docs_IA/architecture.md → sofkify-platform/docs/ARCHITECTURE.md
-
-2. Crear docs/ONBOARDING.md
-   - Paso a paso: clonar, configurar, levantar todo
-
-3. Crear docs/API_CONTRACTS.md
-   - Especificación de cada endpoint
-
-4. Crear docs/DEPLOYMENT.md
-   - Cómo deployar cada servicio a producción
-
-5. Crear docs/TROUBLESHOOTING.md
-   - "¿Por qué falla X? Solución: Y"
-```
-
-**Semana 3: Tests E2E (1 persona, 30 horas)**
-
-```
-1. Centralizar tests E2E en sofkify-platform/tests/
-
-2. Crear tests/e2e/
-   ├─ auth.spec.ts (login/register)
-   ├─ catalog.spec.ts (ver productos)
-   ├─ cart.spec.ts (agregar al carrito)
-   └─ order.spec.ts (crear orden)
-
-3. Ejecutar: npx cypress run
-   Verifica que TODO el flujo funciona
-```
-
----
-
-### 🏛️ Cómo Encaja en Clean Architecture
-
-En Clean Architecture, existe el concepto de **"Use Case"**:
-
-```
-Un UseCase es un flujo que toca MÚLTIPLES capas:
-
-┌─────────────────────────────────────────┐
-│ "Crear Orden" (UseCase)                 │
-├─────────────────────────────────────────┤
-│ 1. Frontend: User click "Confirmar"     │
-│ 2. Cart-service: Obtener carrito        │
-│ 3. Order-service: Crear orden           │
-│ 4. Product-service: Decrementar stock   │
-│ 5. RabbitMQ: Publicar evento            │
-│ 6. Database: Actualizar registros       │
-└─────────────────────────────────────────┘
-
-Este UseCase vive en VARIOS servicios.
-Pero alguien debe coordinar y testear TODO JUNTO.
-
-→ Ese alguien es sofkify-platform
-```
-
-**Principio de Clean Architecture respetado:**
-- Cada servicio es responsable de su parte
-- Platform coordina la orquestación
-- Tests E2E validan que todo funciona junto
-- Documentación es la "fuente de verdad"
-
----
-
----
-
-## 🔴 DOLOR #3: API Inconsistente
-### "Algunos dicen /api/, otros dicen /api/v1/"
-
----
-
-### ¿Cuál es el problema?
-
-**Backend hoy usa:**
-```
-POST /api/users          (sin versión)
-GET /api/products        (sin versión)
-POST /api/carts          (sin versión)
-GET /api/orders          (sin versión)
-```
-
-**Frontend espera:**
-```
-Algunos lugares usan: /api/v1/users
-Otros lugares usan:   /api/users
-Y nadie sabe cuál es la "verdad"
-```
-
-**¿Qué sucede?**
-
-```
-Frontend hace: fetch('/api/v1/users')
-Backend responde: 404 Not Found ❌
-
-Debugger en frontend: "¿Por qué falla?"
-Debugger en backend: "¿Qué quiere el frontend?"
-
-30 minutos después: "Ah, es que uno usa /api/ y otro /api/v1/"
-```
-
-### ¿Por qué es un problema?
-
-**Escenario: Agregar un nuevo campo**
-
-```
-Hoy en backend:
-POST /api/users → {id, name, email}
-
-Mañana en backend:
-POST /api/users → {id, name, email, role}  ← Agregué 'role'
-
-¿Qué pasa en frontend?
-- Si usa el campo 'role': Funciona ✓
-- Si NO usa: También funciona ✓
-- Esto es "backward compatible"
-
-Pero mañana mañana en backend:
-DELETE /api/users → Ya no existe ❌
-
-¿Qué pasa en frontend?
-- Si espera /api/users: ROTO ❌
-- Frontend crashes
-- Sin advertencia
-
-SIN VERSIONADO: No sé cuándo breaking change occur
-CON VERSIONADO: /api/v1/ vs /api/v2/ = claridad
-```
-
-### El Debate: ¿Cómo Versionamos?
-
-#### 🟢 LADO A: "Sin versionado, es simple"
-
-**Argumentos:**
-
-```
-✓ URLs más cortas
-✓ Menos complejidad
-✓ Si cambias bien, no necesitas versiones
-✓ GitHub hace cambios sin versioning
-```
-
-**Filosofía:**
-- "Nuestros clientes siempre upgraaden a la última versión"
-- "No mantenemos versiones antiguas"
-- "Simple es mejor que complejo"
-
----
-
-#### 🔴 LADO B: "Usar /api/v1/, /api/v2/, etc"
-
-**Argumentos:**
-
-```
-✓ Explícito = cliente sabe qué usa
-✓ Backward compatible = puedes cambiar sin romper
-✓ Deprecation path claro = cliente sabe cuándo cambiar
-✓ Futura-proof = mobile app, third-parties, etc
-```
-
-**Filosofía:**
-- "Hoy frontend usa /api/v1/"
-- "En 2027 agregamos /api/v2/ (breaking changes)"
-- "Mantenemos ambas por 6 meses"
-- "Luego removemos /api/v1/"
-
----
-
-### 🏆 El Veredicto: Usa /api/v1/
-
-**¿Por qué?**
-
-```
-1️⃣ REALIDAD: Cambios inevitables
-   - Frontend va a cambiar
-   - Backend va a cambiar
-   - Necesitas forma de manejar breaking changes
-
-2️⃣ SOFKIFY YA ESTÁ USANDO
-   - Algunos lugares dicen /api/v1/
-   - Es realidad del proyecto
-   - Better formalizarlo que ignorarlo
-
-3️⃣ FUTURO-PROOF
-   - Mañana: Mobile app
-   - Después: Terceros integrando
-   - Necesitan saber qué versión usan
-```
-
----
-
-### 💰 Beneficios de Versionado
-
-| Beneficio | Sin Versionado | Con /api/v1/ |
-|-----------|----------------|-------------|
-| **Claridad de Contrato** | "¿Qué endpoints existen?" Confuso | "/api/v1/ = esto es la promesa" |
-| **Breaking Changes** | Avisamos... espera, ¿cuándo? | "/api/v2/" = nuevo contrato, claro |
-| **Backward Compatibility** | Cliente sufre breaking changes sin aviso | Cliente tiene 6 meses para migrar |
-| **Cliente Externo** | ¿Qué version debo usar? | "Usa /api/v1/" Claro |
-| **API Gateway Ready** | (sin plataforma) | Puedes agregar auth, rate-limiting |
-
----
-
-### 📋 Plan de Ejecución: Implementar /api/v1/
-
-**Día 1: Cambio Backend (4 horas, 1 pessoa)**
-
-```
-Actualmente:
-  @RequestMapping("/api/users")
-
-Cambiar a:
-  @RequestMapping("/api/v1/users")
-
-Hacer esto en:
-  ├─ user-service
-  ├─ product-service
-  ├─ cart-service
-  └─ order-service
-
-Verificar: localhost:8080/api/v1/users → 200 OK
-```
-
-**Día 2: Verificar Frontend (2 horas, 1 persona)**
-
-```
-Revisar que sofkify-fe:
-  ├─ Llama a /api/v1/users ✓
-  ├─ Llama a /api/v1/products ✓
-  ├─ Llama a /api/v1/carts ✓
-  └─ Llama a /api/v1/orders ✓
-
-Si encontras /api/ (sin versión):
-  → Actualizar a /api/v1/
-```
-
-**Día 3: Setup API Gateway (6 horas, 1 persona)**
-
-```
-Agregar Nginx como intermediario:
-
-Frontend → Nginx:8000 → Backend:8080
-           ↓
-           API Gateway
-           ├─ /api/v1/* → redirige a backend
-           ├─ /api/* (legacy) → muestra deprecation warning
-           └─ Futuro: rate-limiting, auth, logging
-
-Configuración en sofkify-platform/nginx.conf
-Docker-compose apunta a nginx
-```
-
-**Día 4: Testing (2 horas, 1 persona)**
-
-```
-Verificar que funciona:
-  curl http://localhost:8000/api/v1/users → 200 OK
-  curl http://localhost:8000/api/users → Deprecation warning
-
-Tests de contrato pasan:
-  Frontend espera /api/v1/ → ✓
-  Backend sirve /api/v1/ → ✓
-```
-
----
-
-### 🏛️ Cómo Encaja en Clean Architecture
-
-En Clean Architecture, existe el concepto de **"Contrato de Puerto (Port)"**:
-
-```
-Una de las reglas principales es:
-"El dominio NUNCA debe cambiar dependencias externas"
-
-Con /api/ (sin versión):
-┌──────────────────┐
-│ Frontend (cliente)  → /api/users
-└──────────────────┘
-
-Si backend cambia: POST /api/users → DELETE /api/users
-Frontend ROMPE sin advertencia.
-
-El contrato fue violado.
-
-Con /api/v1/:
-┌──────────────────┐
-│ Frontend (cliente)  → /api/v1/users  ← Contrato explícito
-└──────────────────┘
-
-Si backend quiere cambiar:
-Crea: /api/v2/users (nuevo contrato)
-Mantiene: /api/v1/users (viejo contrato, deprecado)
-
-Cliente elige cuándo migrar.
-Contrato honrado.
-```
-
-**Principio de Clean Architecture respetado:**
-- Contratos explícitos (URLs versionadas)
-- Cambios no rompen a clientes
-- Flexibilidad para evolucionar
-
----
-
----
-
-## 🎬 SÍNTESIS: Los 3 Dolores Conectados
-
-Aunque parecer 3 problemas separados, están conectados:
-
-```
-DOLOR #1: Monorepo
-   ↓ Causa
-Merge conflicts, imposible escalar equipo
-   ↓ Solución
-Multirepo (4 repos independientes)
-
-      ↓↓↓
-
-DOLOR #2: Sin Platform Repo
-   ↓ Causa
-Documentación esparcida, no sabes cómo coordinar 4 repos
-   ↓ Solución
-Platform repo (coordinador central)
-
-      ↓↓↓
-
-DOLOR #3: API Inconsistente
-   ↓ Causa
-Sin contrato claro, breaking changes sin advertencia
-   ↓ Solución
-Versionado /api/v1/ (contrato explícito)
-
-RESULTADO FINAL:
-├─ 4 repos autónomos (DOLOR #1)
-├─ Coordinados por platform repo (DOLOR #2)
-├─ Con contratos claros /api/v1/ (DOLOR #3)
-└─ Todo funciona junto, escalable, claro
-```
-
----
-
-## 📊 TABLA COMPARATIVA: ANTES vs DESPUÉS
-
-| Dimensión | ANTES (Heredado) | DESPUÉS (Propuesto) | Ganancia |
-|-----------|------------------|-------------------|----------|
-| **Repositorios** | 4 servicios en 1 repo | 4 repos + 1 platform | Autonomía ✅ |
-| **Merge Conflicts** | 2-3 por semana | ~0 | Velocidad ↑ |
-| **Documentación** | Esparcida en 3 lugares | Centralizada en platform | Claridad ✅ |
-| **Onboarding** | 6+ horas | 2 horas | -67% tiempo |
-| **API Contract** | /api/ vs /api/v1/ (confuso) | /api/v1/ explícito | Seguridad ↑ |
-| **Deployment** | "Todo o nada" | Independiente por servicio | Velocidad ↑ |
-| **Team Size** | Max 5 devs antes de caos | Soporta 15+ devs | Escalabilidad ↑ |
-
----
-
-## 🎓 ¿Qué Aprende Un Junior Aquí?
-
-Esta es la verdad profunda:
-
-```
-1️⃣ ARQUITECTURA = DECISIONES SOBRE LÍMITES
-   Monorepo vs Multirepo = ¿Dónde ponen los límites?
-   Platform repo = ¿Quién coordina a través de límites?
-   API versioning = ¿Cómo definen las promesas?
-
-2️⃣ CADA DECISIÓN TIENE TRADEOFFS
-   Monorepo = simple pero no escala
-   Multirepo = complejo pero escala
-   Sin versioning = simple pero quebrable
-   Con versioning = un poco más complejo pero seguro
-
-3️⃣ ARQUITECTURA ≠ CÓDIGO
-   Es sobre cómo organizas el EQUIPO y la COMUNICACIÓN
-   No solo sobre cómo escribes código
-   Un junior que entiende esto entiende todo
-
-4️⃣ CLEAN ARCHITECTURE EXISTE EN TODOS LADOS
-   No solo en código (capas dentro del app)
-   También en repos (límites entre servicios)
-   También en APIs (contratos entre sistemas)
-   Límites claros = arquitectura clara
-```
-
----
-
-## 🚀 Próximos Pasos
-
-**Para un Junior:**
-1. Lee este documento (✓ lo acabas de hacer)
-2. Entiende que arquitectura = decisiones sobre límites
-3. Cuando vez un "problema arquitectónico", pregúntate: ¿Dónde están los límites?
-4. Cuando vez una "solución arquitectónica", pregúntate: ¿Cómo cambia esto los límites?
-
-**Para el Senior:**
-Lee [ANALISIS_ARQUITECTONICO_DOLOR_DOLOR_DOLOR.md](../ANALISIS_ARQUITECTONICO_DOLOR_DOLOR_DOLOR.md) para el debate técnico completo.
-
----
-
-## 📚 Glosario: Términos Clave
-
-| Término | Significa |
-|---------|-----------|
-| **Monorepo** | Un repositorio contiene múltiples proyectos/servicios |
-| **Multirepo** | Cada proyecto/servicio tiene su propio repositorio |
-| **Merge Conflict** | Git no sabe cómo combinar 2 cambios al mismo archivo |
-| **Backend-Driven** | La decisión la toma el backend (no coordina con otros) |
-| **Contrato (Contract)** | Promesa de lo que un servicio devuelve (ej: /api/v1/ con ciertos campos) |
-| **Breaking Change** | Cambio que rompe clientes existentes sin advertencia |
-| **Versionado de API** | /api/v1/, /api/v2/, etc. indica qué "contrato" se cumple |
-| **Clean Architecture** | Arquitectura donde límites están claros y el código depende hacia el dominio |
-
----
-
-**Fin del Debate**
-
-*¿Preguntas? Pregúntale a tu tech lead. Esto es para que entiendas el "por qué" detrás de las decisiones.*
+La implementación debe ejecutarse por fases, protegida por criterios de aceptación y validación E2E mínima.
