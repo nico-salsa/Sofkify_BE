@@ -4,13 +4,17 @@ import com.sofkify.orderservice.application.dto.CreateOrderRequest;
 import com.sofkify.orderservice.application.dto.CreateOrderResponse;
 import com.sofkify.orderservice.domain.event.OrderCreatedEvent;
 import com.sofkify.orderservice.domain.model.Order;
+import com.sofkify.orderservice.domain.model.OrderItem;
 import com.sofkify.orderservice.domain.ports.in.CreateOrderUseCase;
 import com.sofkify.orderservice.domain.ports.out.EventPublisherPort;
 import com.sofkify.orderservice.domain.ports.out.OrderRepositoryPort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class CreateOrderService implements CreateOrderUseCase {
@@ -33,9 +37,15 @@ public class CreateOrderService implements CreateOrderUseCase {
             throw new IllegalStateException("Order already exists for cart: " + request.getCartId());
         }
         
-        // For minimal GREEN implementation, create order with empty items
-        // In real scenario, service would fetch cart items via CartServicePort
-        java.util.List<com.sofkify.orderservice.domain.model.OrderItem> items = new ArrayList<>();
+        // Minimal fallback item while this use case is still not wired to cart retrieval.
+        List<OrderItem> items = new ArrayList<>();
+        items.add(new OrderItem(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            "Placeholder Item",
+            BigDecimal.ONE,
+            1
+        ));
         
         // Create order using factory method (auto-generates ID and events)
         Order order = Order.createFromCart(

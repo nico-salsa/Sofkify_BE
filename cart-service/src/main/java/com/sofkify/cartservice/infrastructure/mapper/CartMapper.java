@@ -8,7 +8,6 @@ import com.sofkify.cartservice.infrastructure.adapters.out.persistence.CartItemJ
 import com.sofkify.cartservice.infrastructure.adapters.out.persistence.CartStatusJpa;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Component
@@ -22,7 +21,7 @@ public class CartMapper {
         CartJpaEntity jpaEntity = new CartJpaEntity();
         jpaEntity.setId(cart.getId());
         jpaEntity.setCustomerId(cart.getCustomerId());
-        jpaEntity.setStatus(CartStatusJpa.ACTIVE);
+        jpaEntity.setStatus(CartStatusJpa.valueOf(cart.getStatus().name()));
         jpaEntity.setCreatedAt(cart.getCreatedAt());
         jpaEntity.setUpdatedAt(cart.getUpdatedAt());
 
@@ -58,7 +57,14 @@ public class CartMapper {
             return null;
         }
 
-        Cart cart = new Cart(jpaEntity.getId(), jpaEntity.getCustomerId());
+        CartStatus status = CartStatus.valueOf(jpaEntity.getStatus().name());
+        Cart cart = new Cart(
+                jpaEntity.getId(),
+                jpaEntity.getCustomerId(),
+                status,
+                jpaEntity.getCreatedAt(),
+                jpaEntity.getUpdatedAt()
+        );
         
         if (jpaEntity.getItems() != null) {
             jpaEntity.getItems().stream()

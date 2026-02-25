@@ -1,4 +1,4 @@
-## ADDED Requirements
+﻿## MODIFIED Requirements
 
 ### Requirement: Create order from confirmed cart
 The system SHALL create a new order in PENDING state from a confirmed cart, preserving all item details, quantities, and pricing information. Order creation SHALL be triggered through `POST /api/orders/from-cart/{cartId}` and MUST be idempotent for repeated requests against the same confirmed cart.
@@ -22,3 +22,4 @@ The system SHALL create a new order in PENDING state from a confirmed cart, pres
 #### Scenario: Duplicate creation attempts are rejected deterministically
 - **WHEN** the same confirmed cart is submitted again to `POST /api/orders/from-cart/{cartId}`
 - **THEN** the system SHALL reject duplicate creation with deterministic conflict semantics and without creating a second order
+

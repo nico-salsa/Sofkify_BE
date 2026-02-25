@@ -27,11 +27,9 @@ public class Order {
         this.customerId = Objects.requireNonNull(customerId, "Customer ID cannot be null");
         this.items = new ArrayList<>(Objects.requireNonNull(items, "Order items cannot be null"));
         
-        // Temporarily allow empty items for GREEN phase testing
-        // TODO: Re-enable validation after cart integration is complete
-        // if (items.isEmpty()) {
-        //     throw new IllegalArgumentException("Order must have at least one item");
-        // }
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Order must have at least one item");
+        }
         
         this.status = OrderStatus.PENDING;
         this.totalAmount = calculateTotalAmount();

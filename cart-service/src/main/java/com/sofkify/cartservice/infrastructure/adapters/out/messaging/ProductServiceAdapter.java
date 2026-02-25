@@ -15,7 +15,7 @@ public class ProductServiceAdapter implements ProductServicePort {
     private final String productServiceUrl;
 
     public ProductServiceAdapter(RestTemplate restTemplate,
-                             @Value("${product.service.url:http://localhost:8082}") String productServiceUrl) {
+                             @Value("${product.service.url:http://localhost:8081/api}") String productServiceUrl) {
         this.restTemplate = restTemplate;
         this.productServiceUrl = productServiceUrl;
     }

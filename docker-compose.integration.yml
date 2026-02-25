@@ -1,0 +1,32 @@
+services:
+  frontend:
+    image: node:20-alpine
+    container_name: sofkify-frontend
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    volumes:
+      - ../sofkify-fe:/app
+      - frontend-node-modules:/app/node_modules
+    environment:
+      VITE_USERS_API_URL: ${VITE_USERS_API_URL:-http://localhost:8080/api}
+      VITE_PRODUCTS_API_URL: ${VITE_PRODUCTS_API_URL:-http://localhost:8081/api}
+      VITE_CARTS_API_URL: ${VITE_CARTS_API_URL:-http://localhost:8083/api}
+      VITE_ORDERS_API_URL: ${VITE_ORDERS_API_URL:-http://localhost:8082/api}
+      VITE_HTTP_TIMEOUT_MS: ${VITE_HTTP_TIMEOUT_MS:-10000}
+    ports:
+      - "5173:5173"
+    networks:
+      - sofkify-network
+    depends_on:
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  frontend-node-modules:

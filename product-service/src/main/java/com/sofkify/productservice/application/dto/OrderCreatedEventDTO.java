@@ -1,11 +1,13 @@
 package com.sofkify.productservice.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record OrderCreatedEventDTO(
     @JsonProperty("orderId")
     UUID orderId,
