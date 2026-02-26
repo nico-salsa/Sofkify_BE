@@ -6,10 +6,22 @@ The Sofkify e-commerce platform has 4 microservices (user, product, cart, order)
 
 **Current cart state management**: Carts remain CONFIRMED indefinitely after confirmation. The backend correctly rejects duplicate confirmation attempts (400 "Cart is already confirmed"). The frontend incorrectly retries confirmation on the same cart instead of creating a new one.
 
+**🚨 CRITICAL BUG FOUND IN BACKEND (Code Analysis Results)**:
+- `AddItemToCartService.addItem()` uses `cartRepository.findByCustomerId(customerId)` WITHOUT filtering by status
+- When a user has a CONFIRMED cart and adds items for a second purchase, the backend RETURNS THE CONFIRMED CART
+- `Cart.addItem()` domain method does NOT validate cart status before adding items
+- This allows items to be added to CONFIRMED carts, which then fail on re-confirmation
+- **Root cause**: Missing filter for CartStatus.ACTIVE in repository query
+
+**Affected files** (Backend):
+- `AddItemToCartService.java` line 67
+- `CartJpaRepository.java` - missing `findByCustomerIdAndStatus` method
+- `Cart.java` addItem() - missing status validation
+
 **Constraints**:
-- Backend API contracts are stable and correct; minimize backend changes
-- Frontend must handle multiple purchase sessions per user
-- Hexagonal architecture and DDD principles must be preserved in any backend changes
+- Hexagonal architecture and DDD principles must be preserved
+- Add minimal API surface changes
+- Frontend must handle backendCartId tracking for robust state management
 
 ## Goals / Non-Goals
 
@@ -29,48 +41,75 @@ The Sofkify e-commerce platform has 4 microservices (user, product, cart, order)
 
 ### Decision 1: Cart Lifecycle Management Strategy
 
-**Chosen**: Frontend-driven cart replacement after order creation
+**Chosen**: Backend filters by ACTIVE status + Frontend tracks backendCartId
 
-**Rationale**: The backend already auto-creates carts on first `POST /api/carts/items` if none exists. Reusing this pattern avoids new backend endpoints and preserves API simplicity.
+**Rationale**: Code analysis revealed the backend bug: `AddItemToCartService` returns CONFIRMED carts when searching by customerId. This causes the "Cart is already confirmed" error on second purchases.
 
-**How it works**:
-1. User shops → adds items → frontend tracks `currentCartId`
-2. User confirms cart → cart transitions to CONFIRMED → order created
-3. Frontend **clears** `currentCartId` from state (localStorage/context)
-4. Next time user adds item → backend creates **new** cart automatically
-5. Frontend receives new cart ID in response and tracks it
+**Backend fix (REQUIRED)**:
+1. Add `findByCustomerIdAndStatus(UUID customerId, CartStatus status)` to repository layer
+2. Modify `AddItemToCartService.addItem()` to search for ACTIVE carts only:
+   ```java
+   Cart cart = cartRepository.findByCustomerIdAndStatus(customerId, CartStatus.ACTIVE)
+           .orElseGet(() -> new Cart(UUID.randomUUID(), customerId));
+   ```
+3. (Optional but recommended) Add defensive validation in `Cart.addItem()`:
+   ```java
+   if (this.status == CartStatus.CONFIRMED) {
+       throw new IllegalStateException("Cannot add items to a confirmed cart");
+   }
+   ```
+
+**Frontend enhancement (REQUIRED)**:
+1. Track `backendCartId` in CartContext state (not just localStorage items)
+2. After order creation, clear `backendCartId` from state
+3. Remove "materialization loop" in `useCartConfirmation` (items are already in backend)
 
 **Alternatives considered**:
-- **Alt A**: Add `POST /api/carts` endpoint to create empty carts → Rejected: adds complexity, carts are implicitly created on first item
-- **Alt B**: Add `DELETE /api/carts/{cartId}` endpoint → Rejected: unnecessary, confirmed carts are historical records
-- **Alt C**: Backend auto-creates new cart on order creation → Rejected: violates single responsibility (order-service shouldn't manage carts)
+- **Alt A**: Frontend calls new `POST /api/carts` to create empty cart → Rejected: unnecessary complexity, auto-creation works fine with ACTIVE filter
+- **Alt B**: Backend auto-archives CONFIRMED carts on next addItem → Rejected: violates single responsibility, implicit state transitions are confusing
+- **Alt C**: Backend allows adding items to CONFIRMED carts → Rejected: violates domain model integrity
 
 **Implementation**:
-- Frontend: After `POST /api/orders/from-cart/{cartId}` succeeds, call `clearCart()` in state management
-- Backend: No changes required
+- Backend: 3 files (CartJpaRepository, CartRepositoryAdapter, AddItemToCartService)
+- Frontend: 2 files (CartContext, useCartConfirmation)
 
 ---
 
 ### Decision 2: "Buy Now" Workflow
 
-**Chosen**: "Buy Now" = confirm current cart WITHOUT adding products again
+**Chosen**: Remove "materialization loop" + use getActiveCart to find backendCartId
 
-**Rationale**: The current implementation appears to call both `addItem(quantity)` AND `confirmCart()`, causing duplication. "Buy Now" should be a shortcut to checkout, not a secondary add-to-cart.
+**Rationale**: Code analysis of `useCartConfirmation.ts` revealed a critical bug: lines 53-56 execute a loop that calls `cartApi.addItem()` for every item in the local cart. This happens AFTER the user already added items via "Add to Cart" or "Buy Now" buttons, causing duplication.
 
-**Expected behavior**:
-- User selects product + quantity → clicks "Buy Now"
-- Frontend checks if product is already in cart with that quantity
-  - **If NOT in cart**: `POST /api/carts/items` → then `POST /api/carts/{cartId}/confirm`
-  - **If ALREADY in cart**: Skip add, directly `POST /api/carts/{cartId}/confirm`
-- Navigate to checkout page
+**Current problematic flow**:
+1. User clicks "Buy Now" → `handleAddToCart()` → `CartContext.addItem()` → `cartApi.addItemToCart()` ✅ Items added to backend
+2. Navigate to `/cart` → User clicks "Confirm Cart"
+3. `useCartConfirmation.confirmCart()` executes:
+   ```typescript
+   // 🐛 BUG: Re-adds all items to backend cart
+   for (const item of items) {
+     const cartResponse = await cartApi.addItem(userId, item.productId, item.quantity);
+   }
+   ```
+4. Backend receives duplicate addItem calls → products duplicated
+
+**Fixed flow**:
+1. User clicks "Buy Now" → `handleAddToCart()` → `CartContext.addItem()` → `cartApi.addItemToCart()` ✅ Items added to backend
+2. Navigate to `/cart` → User clicks "Confirm Cart"
+3. `useCartConfirmation.confirmCart()` executes:
+   ```typescript
+   // ✅ FIX: Get existing backend cart, don't re-add items
+   const backendCart = await cartApi.getActiveCart(userId);
+   const confirmResponse = await cartApi.confirmCart(backendCart.id, userId);
+   ```
 
 **Alternatives considered**:
-- **Alt A**: "Buy Now" creates a separate ephemeral cart → Rejected: over-engineering, conflicts with single cart per customer
-- **Alt B**: "Buy Now" always adds items regardless of cart state → Rejected: causes the reported duplication bug
+- **Alt A**: "Buy Now" checks if product in cart before adding → Rejected: doesn't fix the root cause (materialization loop)
+- **Alt B**: Backend deduplicates items on addItem → Rejected: violates idempotency, adds complexity
 
 **Implementation**:
-- Frontend: Refactor "Buy Now" click handler to check cart state before calling addItem
-- Backend: No changes required
+- Frontend: Remove lines 53-56 in `useCartConfirmation.ts`, replace with `getActiveCart()` call
+- Backend: No changes required for this fix
 
 ---
 

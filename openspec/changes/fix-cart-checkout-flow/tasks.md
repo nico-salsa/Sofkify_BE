@@ -2,72 +2,71 @@
 
 **Backend Repository**: `C:\Sofkify\Sofkify_BE` (https://github.com/nico-salsa/Sofkify_BE.git)
 - Branch: `fix/cart-checkout-flow`
-- Changes: Verification only, no API contract changes needed
+- Changes: **CRITICAL FIX REQUIRED** - AddItemToCartService returns CONFIRMED carts (root cause of bug #2)
 
 **Frontend Repository**: `C:\Sofkify\sofkify-fe` (https://github.com/nico-salsa/sofkify-fe.git)
-- Branch: `fix/cart-checkout-flow` (to be created)
-- Changes: All implementation work happens here
+- Branch: `fix/cart-checkout-flow`
+- Changes: Remove materialization loop, track backendCartId, improve state management
 
 ---
 
 ## 1. Repository Setup
 
-- [ ] 1.1 Create branch `fix/cart-checkout-flow` in frontend repository (C:\Sofkify\sofkify-fe)
-- [ ] 1.2 Verify backend branch exists and is current (C:\Sofkify\Sofkify_BE)
+- [ ] 1.1 Backend branch confirmed (C:\Sofkify\Sofkify_BE on fix/cart-checkout-flow)
+- [ ] 1.2 Frontend branch confirmed (C:\Sofkify\sofkify-fe on fix/cart-checkout-flow)
 
-## 2. Cart Lifecycle Management (Frontend Repo: sofkify-fe)
+## 2. Backend Critical Fix - Filter ACTIVE Carts Only (Backend Repo: Sofkify_BE)
 
-- [ ] 2.1 Implement cart state clearing after order creation (clear `currentCartId` from localStorage/context after `POST /api/orders/from-cart/{cartId}` success)
-- [ ] 2.2 Add cart status tracking in frontend state (ACTIVE, CONFIRMED, CLEARED) with transitions
-- [ ] 2.3 Implement cart state persistence across page reloads (restore from localStorage or re-fetch via `GET /api/carts` on mount)
-- [ ] 2.4 Add UI state management to disable cart modifications when status is CONFIRMED (disable add/remove/update buttons)
-- [ ] 2.5 Implement automatic new cart initialization on first item add after previous cart confirmation (verify backend auto-creates cart on `POST /api/carts/items`)
+- [ ] 2.1 Add `findByCustomerIdAndStatus` method to `CartJpaRepository` interface
+- [ ] 2.2 Add `findByCustomerIdAndStatus` method to `CartRepositoryPort` interface
+- [ ] 2.3 Implement `findByCustomerIdAndStatus` in `CartRepositoryAdapter`
+- [ ] 2.4 Modify `AddItemToCartService` to use `findByCustomerIdAndStatus(customerId, CartStatus.ACTIVE)` instead of `findByCustomerId`
+- [ ] 2.5 (Optional) Add defensive validation in `Cart.addItem()`: throw exception if status is CONFIRMED
 
-## 3. "Buy Now" Workflow Fix (Frontend Repo: sofkify-fe)
+## 3. Frontend - Remove "Buy Now" Duplication (Frontend Repo: sofkify-fe)
 
-- [ ] 3.1 Refactor "Buy Now" button click handler to check if product is already in cart with selected quantity
-- [ ] 3.2 Implement conditional logic: if product NOT in cart, call `POST /api/carts/items` before `POST /api/carts/{cartId}/confirm`
-- [ ] 3.3 Implement conditional logic: if product ALREADY in cart at exact quantity, skip add and directly call `POST /api/carts/{cartId}/confirm`
-- [ ] 3.4 Implement quantity update logic: if product in cart at different quantity, call `PUT /api/carts/items/{cartItemId}` before confirmation
-- [ ] 3.5 Add navigation to checkout page after successful cart confirmation (redirect to `/checkout` or `/order` with cartId)
-- [ ] 3.6 Add error handling for confirmation failures (display backend error message without clearing cart)
+- [ ] 3.1 Remove "materialization loop" (lines 53-56) from `useCartConfirmation.ts`
+- [ ] 3.2 Replace materialization with `cartApi.getActiveCart(userId)` call to fetch backendCartId
+- [ ] 3.3 Use the fetched `backendCart.id` directly in `confirmCart()` call
 
-## 4. Confirm Cart Error Handling (Frontend Repo: sofkify-fe)
+## 4. Frontend - Track Backend Cart ID (Frontend Repo: sofkify-fe)
 
-- [ ] 4.1 Implement 400 error detection for "Cart is already confirmed" response from `POST /api/carts/{cartId}/confirm`
-- [ ] 4.2 Update cart status to CONFIRMED in state when detecting duplicate confirmation error
-- [ ] 4.3 Redirect user to order creation flow when cart is detected as already confirmed
-- [ ] 4.4 Add UI messaging for confirmed carts (e.g., "Cart confirmed - proceed to create order")
-- [ ] 4.5 Implement stale state recovery: re-fetch cart on backend 400/409 errors during cart modifications
+- [ ] 4.1 Add `backendCartId: string | null` to CartContext interface (`cart-context.ts`)
+- [ ] 4.2 Add `backendCartId` state in `CartContext.tsx` provider
+- [ ] 4.3 Update `addItem()` to extract and save `cartResponse.id` from backend response
+- [ ] 4.4 Update `clearCart()` to also reset `backendCartId` to null
+- [ ] 4.5 (Optional) Use `backendCartId` from context in `useCartConfirmation` instead of fetching
 
-## 5. Post-Checkout Navigation (Frontend Repo: sofkify-fe)
+## 5. Frontend - Post-Checkout State Cleanup (Frontend Repo: sofkify-fe)
 
-- [ ] 5.1 Add "Back to Store" or "Continue Shopping" button on order confirmation/success page
-- [ ] 5.2 Implement navigation to product catalog on button click (route to `/products` or `/`)
-- [ ] 5.3 Fix logo click handler on checkout page to navigate to home/product catalog
-- [ ] 5.4 Clear checkout-specific state (cart reference, checkout steps) on navigation away from checkout pages
+- [ ] 5.1 Verify `clearCart()` is called after order creation in `CartConfirmationPage.tsx` (line 34)
+- [ ] 5.2 Ensure navigation to `/order-success` happens after clearCart
+- [ ] 5.3 Test that backendCartId is null after checkout completes
 
-## 6. Backend Verification (Backend Repo: Sofkify_BE)
+## 6. Frontend - Navigation Validation (Frontend Repo: sofkify-fe)
 
-- [ ] 6.1 Verify cart auto-creation behavior: confirm `POST /api/carts/items` creates new cart if none exists for customer (check `AddItemToCartService.addItem()` implementation)
-- [ ] 6.2 Verify no new backend endpoints are needed (confirm existing API contracts are sufficient)
+- [ ] 6.1 Verify "Continuar Comprando" button in `OrderSuccessPage.tsx` navigates to `/` correctly
+- [ ] 6.2 Verify logo in `Header.tsx` has correct `<Link to="/">` 
+- [ ] 6.3 Test navigation from order success page to home and back to shopping
 
 ## 7. Integration Testing (Both Repositories)
 
 - [ ] 7.1 Start backend services with Docker Compose in backend repo
-- [ ] 7.2 Start frontend with `npm run dev` in frontend repo
-- [ ] 7.3 Test complete purchase flow: add items → confirm cart → create order → verify cart cleared
-- [ ] 7.4 Test repeat purchase flow: after order creation, add new item → verify new cart is created
-- [ ] 7.5 Test "Buy Now" with product not in cart (verify no duplication)
-- [ ] 7.6 Test "Buy Now" with product already in cart (verify no duplication)
-- [ ] 7.7 Test cart confirmation error recovery (attempt duplicate confirmation → verify graceful handling)
-- [ ] 7.8 Test post-checkout navigation (click "Back to Store" and logo → verify both work)
-- [ ] 7.9 Test cart state persistence across page reloads (add items, reload, verify cart restored)
-- [ ] 7.10 Test multi-tab scenario (confirm cart in one tab, verify other tab detects state change)
+- [ ] 7.2 Start frontend with `npm run dev` in frontend repo (verify .env points to localhost:808X)
+- [ ] 7.3 Test first purchase flow: add items → confirm cart → create order → verify cart cleared
+- [ ] 7.4 **CRITICAL TEST**: Second purchase flow - add new items → verify NEW cart created (not CONFIRMED one)
+- [ ] 7.5 Test "Buy Now" button: verify products are NOT duplicated in cart
+- [ ] 7.6 Test cart confirmation with already-confirmed cart: verify graceful error handling instead of 400 error
+- [ ] 7.7 Test post-checkout navigation: verify "Back to Store" and logo both work
+- [ ] 7.8 Test cart state persistence across page reloads
+- [ ] 7.9 Verify backend logs show new cart creation on second purchase (different cartId)
+- [ ] 7.10 Test multi-tab scenario: confirm cart in tab 1, add items in tab 2, verify new cart created
 
-## 8. Merge Strategy
+## 8. Code Review & Merge Strategy
 
-- [ ] 8.1 Merge frontend `fix/cart-checkout-flow` → `develop` (sofkify-fe repo)
-- [ ] 8.2 Merge backend `fix/cart-checkout-flow` → `develop` (Sofkify_BE repo)
-- [ ] 8.3 Test integration on develop branches
-- [ ] 8.4 Merge both develop → main if all tests pass
+- [ ] 8.1 Review backend changes: verify repository layer follows hexagonal architecture
+- [ ] 8.2 Review frontend changes: verify state management is clean and predictable
+- [ ] 8.3 Merge backend `fix/cart-checkout-flow` → `develop` (Sofkify_BE repo)
+- [ ] 8.4 Merge frontend `fix/cart-checkout-flow` → `develop` (sofkify-fe repo)
+- [ ] 8.5 Test integration on develop branches
+- [ ] 8.6 Merge both develop → main if all tests pass
