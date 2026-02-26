@@ -22,3 +22,22 @@ The system SHALL validate stock availability and transition an ACTIVE cart to CO
 #### Scenario: Confirmation request is observable in logs
 - **WHEN** frontend triggers `POST /api/carts/{cartId}/confirm` in local integration mode
 - **THEN** request and outcome SHALL be visible in frontend and cart-service logs
+
+---
+
+## ADDED Requirements (Frontend)
+
+### Requirement: Frontend handles cart confirmation edge cases gracefully
+The frontend SHALL detect and recover from scenarios where cached cart state diverges from backend state, particularly around the CONFIRMED status.
+
+#### Scenario: Frontend detects cached CONFIRMED cart before re-confirmation
+- **WHEN** the frontend has a locally-cached cart reference whose status is already CONFIRMED (e.g., from a previous session or stale localStorage)
+- **THEN** the frontend SHALL skip the confirmation API call and either proceed directly to order creation or prompt the user to start a new cart
+
+#### Scenario: Frontend handles 400 "already confirmed" error
+- **WHEN** the frontend sends `POST /api/carts/{cartId}/confirm` and receives a 400 response with message indicating the cart is already confirmed
+- **THEN** the frontend SHALL treat the cart as confirmed, clear the stale cart reference, and allow the user to proceed to order creation or start a new shopping session
+
+#### Scenario: Frontend recovers from stale cart state
+- **WHEN** the frontend detects a state inconsistency between local cart data and backend cart state (e.g., local says ACTIVE but backend says CONFIRMED or cart not found)
+- **THEN** the frontend SHALL clear all local cart references, display an informational message to the user, and redirect to product catalog to start fresh
