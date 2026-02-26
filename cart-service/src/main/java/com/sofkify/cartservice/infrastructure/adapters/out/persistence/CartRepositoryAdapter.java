@@ -1,6 +1,7 @@
 package com.sofkify.cartservice.infrastructure.adapters.out.persistence;
 
 import com.sofkify.cartservice.domain.model.Cart;
+import com.sofkify.cartservice.domain.model.CartStatus;
 import com.sofkify.cartservice.domain.ports.out.CartRepositoryPort;
 import com.sofkify.cartservice.infrastructure.mapper.CartMapper;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,12 @@ public class CartRepositoryAdapter implements CartRepositoryPort {
     @Override
     public Optional<Cart> findByCustomerId(UUID customerId) {
         return cartJpaRepository.findByCustomerId(customerId)
+                .map(cartMapper::toDomainEntity);
+    }
+
+    @Override
+    public Optional<Cart> findByCustomerIdAndStatus(UUID customerId, CartStatus status) {
+        return cartJpaRepository.findByCustomerIdAndStatus(customerId, status)
                 .map(cartMapper::toDomainEntity);
     }
 
