@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception thrown when attempting to confirm a cart that is already confirmed.
  */
-public class CartAlreadyConfirmedException extends RuntimeException {
+public class CartAlreadyConfirmedException extends CartException {
     
     private final UUID cartId;
     private final LocalDateTime confirmationTime;

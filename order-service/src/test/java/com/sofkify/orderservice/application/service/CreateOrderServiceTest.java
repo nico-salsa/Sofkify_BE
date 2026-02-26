@@ -2,78 +2,100 @@ package com.sofkify.orderservice.application.service;
 
 import com.sofkify.orderservice.application.dto.CreateOrderRequest;
 import com.sofkify.orderservice.application.dto.CreateOrderResponse;
-import com.sofkify.orderservice.domain.ports.in.CreateOrderUseCase;
-import org.junit.jupiter.api.Test;
+import com.sofkify.orderservice.domain.event.OrderCreatedEvent;
+import com.sofkify.orderservice.domain.model.Order;
+import com.sofkify.orderservice.domain.ports.out.EventPublisherPort;
+import com.sofkify.orderservice.domain.ports.out.OrderRepositoryPort;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import java.util.UUID;
 
-@DisplayName("CreateOrderService Tests - RED Phase")
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@DisplayName("CreateOrderService - GREEN Phase Tests")
 class CreateOrderServiceTest {
 
+    @Mock
+    private OrderRepositoryPort orderRepository;
+
+    @Mock
+    private EventPublisherPort eventPublisher;
+
+    private CreateOrderService service;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        service = new CreateOrderService(orderRepository, eventPublisher);
+    }
+
     @Test
-    @DisplayName("Should fail - CreateOrderService does not exist yet")
-    void shouldFailCreateOrderServiceDoesNotExist() {
-        // This test will fail because CreateOrderService doesn't exist
+    @DisplayName("Should create order successfully from cart data")
+    void shouldCreateOrderSuccessfully() {
+        // Given
         UUID cartId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
+        
         CreateOrderRequest request = new CreateOrderRequest(cartId, customerId);
         
-        // This should fail - CreateOrderService class needs to be implemented
-        CreateOrderService service = new CreateOrderService(null, null, null);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
         
+        // When
         CreateOrderResponse response = service.execute(request);
         
+        // Then
         assertNotNull(response);
-        assertEquals(cartId, response.getCartId());
         assertNotNull(response.getOrderId());
+        assertEquals(cartId, response.getCartId());
         assertTrue(response.isSuccess());
-    }
-
-    @Test
-    @DisplayName("Should fail - CreateOrderUseCase port does not exist")
-    void shouldFailCreateOrderUseCaseDoesNotExist() {
-        // This will fail because CreateOrderUseCase interface doesn't exist
-        CreateOrderUseCase useCase = null; // Should be an interface
         
-        assertNotNull(useCase);
+        verify(orderRepository).save(any(Order.class));
+        verify(eventPublisher).publish(any(OrderCreatedEvent.class));
     }
 
     @Test
-    @DisplayName("Should fail - CreateOrderRequest DTO does not exist")
-    void shouldFailCreateOrderRequestDoesNotExist() {
-        // This will fail because CreateOrderRequest doesn't exist
+    @DisplayName("Should publish OrderCreatedEvent after creating order")
+    void shouldPublishOrderCreatedEvent() {
+        // Given
         UUID cartId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
         
         CreateOrderRequest request = new CreateOrderRequest(cartId, customerId);
         
-        assertNotNull(request);
-        assertEquals(cartId, request.getCartId());
-        assertEquals(customerId, request.getCustomerId());
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        service.execute(request);
+        
+        // Then
+        verify(eventPublisher).publish(argThat(event -> 
+            event instanceof OrderCreatedEvent &&
+            ((OrderCreatedEvent) event).getCartId().equals(cartId)
+        ));
     }
 
     @Test
-    @DisplayName("Should fail - CreateOrderResponse DTO does not exist")
-    void shouldFailCreateOrderResponseDoesNotExist() {
-        // This will fail because CreateOrderResponse doesn't exist
-        UUID orderId = UUID.randomUUID();
+    @DisplayName("Should prevent duplicate orders for same cart (idempotency)")
+    void shouldPreventDuplicateOrders() {
+        // Given
         UUID cartId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
         
-        CreateOrderResponse response = new CreateOrderResponse(orderId, cartId, true, "Order created successfully");
+        CreateOrderRequest request = new CreateOrderRequest(cartId, customerId);
         
-        assertNotNull(response);
-        assertTrue(response.isSuccess());
-        assertEquals(orderId, response.getOrderId());
-        assertEquals(cartId, response.getCartId());
-    }
-
-    @Test
-    @DisplayName("Should fail - Order repository port does not exist")
-    void shouldFailOrderRepositoryDoesNotExist() {
-        // This will fail because OrderRepository port doesn't exist in application
-        com.sofkify.orderservice.domain.ports.out.OrderRepository repository = null;
+        when(orderRepository.existsByCartId(cartId)).thenReturn(true);
         
-        assertNotNull(repository);
+        // When / Then
+        assertThrows(IllegalStateException.class, () -> service.execute(request));
+        
+        verify(orderRepository).existsByCartId(cartId);
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(eventPublisher, never()).publish(any(OrderCreatedEvent.class));
     }
 }

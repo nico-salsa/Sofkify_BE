@@ -2,6 +2,7 @@ package com.sofkify.cartservice.application.service;
 
 import com.sofkify.cartservice.domain.exception.CartException;
 import com.sofkify.cartservice.domain.model.Cart;
+import com.sofkify.cartservice.domain.model.CartStatus;
 import com.sofkify.cartservice.domain.ports.in.GetCartUseCase;
 import com.sofkify.cartservice.domain.ports.out.CartRepositoryPort;
 import org.springframework.stereotype.Service;
@@ -20,8 +21,8 @@ public class GetCartService implements GetCartUseCase {
     
     @Override
     public Cart getCartByCustomerId(UUID customerId) {
-        return cartRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new CartException("Cart not found for customer: " + customerId));
+        return cartRepository.findByCustomerIdAndStatus(customerId, CartStatus.ACTIVE)
+                .orElseThrow(() -> new CartException("Active cart not found for customer: " + customerId));
     }
     
     @Override

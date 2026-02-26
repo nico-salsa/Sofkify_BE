@@ -18,14 +18,18 @@ spring:
         format_sql: true
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
     virtual-host: /
 
 server:
   port: 8081
+  tomcat:
+    accesslog:
+      enabled: true
+      pattern: '%h %l %u %t "%r" %s %b %D'
 
 # Configuración de RabbitMQ
 rabbitmq:
@@ -44,3 +48,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.amqp: DEBUG
+
+sofkify:
+  seed:
+    products:
+      enabled: ${SOFKIFY_SEED_PRODUCTS_ENABLED:true}

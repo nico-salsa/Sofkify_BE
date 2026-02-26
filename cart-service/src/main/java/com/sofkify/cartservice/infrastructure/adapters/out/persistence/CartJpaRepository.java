@@ -15,6 +15,8 @@ public interface CartJpaRepository extends JpaRepository<CartJpaEntity, UUID> {
     
     Optional<CartJpaEntity> findByCustomerId(UUID customerId);
     
+    Optional<CartJpaEntity> findByCustomerIdAndStatus(UUID customerId, CartStatusJpa status);
+    
     @Query("SELECT c FROM CartJpaEntity c WHERE c.status = 'ACTIVE' AND c.updatedAt < :cutoff")
     List<CartJpaEntity> findActiveCartsNotUpdatedSince(@Param("cutoff") LocalDateTime cutoff);
 }

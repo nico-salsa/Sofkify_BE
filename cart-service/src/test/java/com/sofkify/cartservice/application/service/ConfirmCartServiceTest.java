@@ -2,65 +2,96 @@ package com.sofkify.cartservice.application.service;
 
 import com.sofkify.cartservice.application.dto.ConfirmCartRequest;
 import com.sofkify.cartservice.application.dto.ConfirmCartResponse;
-import com.sofkify.cartservice.domain.ports.in.ConfirmCartUseCase;
-import org.junit.jupiter.api.Test;
+import com.sofkify.cartservice.domain.exception.CartException;
+import com.sofkify.cartservice.domain.model.Cart;
+import com.sofkify.cartservice.domain.ports.out.CartRepositoryPort;
+import com.sofkify.cartservice.domain.ports.out.ProductServicePort;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
-@DisplayName("ConfirmCartService Tests - RED Phase")
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@DisplayName("ConfirmCartService Tests")
 class ConfirmCartServiceTest {
 
-    @Test
-    @DisplayName("Should fail - ConfirmCartService does not exist yet")
-    void shouldFailConfirmCartServiceDoesNotExist() {
-        // This test will fail because ConfirmCartService doesn't exist
-        UUID cartId = UUID.randomUUID();
-        ConfirmCartRequest request = new ConfirmCartRequest(cartId, UUID.randomUUID());
-        
-        // This should fail - ConfirmCartService class needs to be implemented
-        ConfirmCartService service = new ConfirmCartService(null, null, null);
-        
-        ConfirmCartResponse response = service.execute(request);
-        
-        assertNotNull(response);
-        assertEquals(cartId, response.getCartId());
-        assertTrue(response.isSuccess());
+    @Mock
+    private CartRepositoryPort cartRepository;
+
+    @Mock
+    private ProductServicePort productServicePort;
+
+    private ConfirmCartService service;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        service = new ConfirmCartService(cartRepository, productServicePort);
     }
 
     @Test
-    @DisplayName("Should fail - ConfirmCartUseCase port does not exist")
-    void shouldFailConfirmCartUseCaseDoesNotExist() {
-        // This will fail because ConfirmCartUseCase interface doesn't exist
-        ConfirmCartUseCase useCase = null; // Should be an interface
-        
-        assertNotNull(useCase);
-    }
-
-    @Test
-    @DisplayName("Should fail - ConfirmCartRequest DTO does not exist")
-    void shouldFailConfirmCartRequestDoesNotExist() {
-        // This will fail because ConfirmCartRequest doesn't exist
+    @DisplayName("Should confirm cart successfully when cart exists and customer matches")
+    void shouldConfirmCartSuccessfully() {
         UUID cartId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
-        
+        UUID productId = UUID.randomUUID();
+
+        Cart cart = new Cart(cartId, customerId);
+        cart.addItem(productId, "Test Product", new BigDecimal("10.00"), 2);
+
         ConfirmCartRequest request = new ConfirmCartRequest(cartId, customerId);
-        
-        assertNotNull(request);
-        assertEquals(cartId, request.getCartId());
-        assertEquals(customerId, request.getCustomerId());
+
+        when(cartRepository.findById(cartId)).thenReturn(Optional.of(cart));
+        when(productServicePort.validateStock(productId, 2)).thenReturn(true);
+        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+
+        ConfirmCartResponse response = service.execute(request);
+
+        assertNotNull(response);
+        assertEquals(cartId, response.getCartId());
+        assertTrue(response.isSuccess());
+
+        verify(cartRepository).findById(cartId);
+        verify(cartRepository).save(any(Cart.class));
+        verify(productServicePort).validateStock(productId, 2);
     }
 
     @Test
-    @DisplayName("Should fail - ConfirmCartResponse DTO does not exist")
-    void shouldFailConfirmCartResponseDoesNotExist() {
-        // This will fail because ConfirmCartResponse doesn't exist
+    @DisplayName("Should fail when cart does not exist")
+    void shouldFailWhenCartDoesNotExist() {
         UUID cartId = UUID.randomUUID();
-        
-        ConfirmCartResponse response = new ConfirmCartResponse(cartId, true, "Cart confirmed successfully");
-        
-        assertNotNull(response);
-        assertTrue(response.isSuccess());
-        assertEquals(cartId, response.getCartId());
+        UUID customerId = UUID.randomUUID();
+        ConfirmCartRequest request = new ConfirmCartRequest(cartId, customerId);
+
+        when(cartRepository.findById(cartId)).thenReturn(Optional.empty());
+
+        assertThrows(CartException.class, () -> service.execute(request));
+    }
+
+    @Test
+    @DisplayName("Should fail when customer ID does not match")
+    void shouldFailWhenCustomerDoesNotMatch() {
+        UUID cartId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID differentCustomerId = UUID.randomUUID();
+
+        Cart cart = new Cart(cartId, ownerId);
+        ConfirmCartRequest request = new ConfirmCartRequest(cartId, differentCustomerId);
+
+        when(cartRepository.findById(cartId)).thenReturn(Optional.of(cart));
+
+        assertThrows(CartException.class, () -> service.execute(request));
     }
 }
