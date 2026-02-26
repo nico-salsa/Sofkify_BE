@@ -13,7 +13,7 @@ public class CartJpaEntity {
     @Column(name = "id", updatable = false)
     private UUID id;
     
-    @Column(name = "customer_id", nullable = false, unique = true)
+    @Column(name = "customer_id", nullable = false)
     private UUID customerId;
     
     @Enumerated(EnumType.STRING)

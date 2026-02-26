@@ -2,6 +2,7 @@ package com.sofkify.cartservice.application.service;
 
 import com.sofkify.cartservice.domain.exception.CartException;
 import com.sofkify.cartservice.domain.model.Cart;
+import com.sofkify.cartservice.domain.model.CartStatus;
 import com.sofkify.cartservice.domain.ports.in.AddItemToCartUseCase;
 import com.sofkify.cartservice.domain.ports.out.CartRepositoryPort;
 import com.sofkify.cartservice.domain.ports.out.ProductServicePort;
@@ -31,7 +32,7 @@ public class AddItemToCartService implements AddItemToCartUseCase {
      * Adds a product to the customer's active cart.
      *
      * <p>The flow validates customer status, product availability, and stock before mutating
-     * the cart. If the customer has no cart, a new cart is created.</p>
+     * the cart. If the customer has no active cart, a new cart is created.</p>
      *
      * @param customerId customer identifier
      * @param productId product identifier
@@ -58,8 +59,8 @@ public class AddItemToCartService implements AddItemToCartUseCase {
             throw new CartException("Insufficient stock for product: " + productId);
         }
         
-        // Obtener o crear carrito
-        Cart cart = cartRepository.findByCustomerId(customerId)
+        // Obtener o crear carrito ACTIVE (fixed: search only for ACTIVE carts)
+        Cart cart = cartRepository.findByCustomerIdAndStatus(customerId, CartStatus.ACTIVE)
                 .orElseGet(() -> new Cart(UUID.randomUUID(), customerId));
         
         // Agregar item al carrito

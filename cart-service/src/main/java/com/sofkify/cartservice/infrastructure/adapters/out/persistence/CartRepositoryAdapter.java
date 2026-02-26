@@ -1,6 +1,7 @@
 package com.sofkify.cartservice.infrastructure.adapters.out.persistence;
 
 import com.sofkify.cartservice.domain.model.Cart;
+import com.sofkify.cartservice.domain.model.CartStatus;
 import com.sofkify.cartservice.domain.ports.out.CartRepositoryPort;
 import com.sofkify.cartservice.infrastructure.mapper.CartMapper;
 import org.springframework.stereotype.Component;
@@ -33,8 +34,24 @@ public class CartRepositoryAdapter implements CartRepositoryPort {
     }
 
     @Override
+    public Optional<Cart> findByCustomerIdAndStatus(UUID customerId, CartStatus status) {
+        CartStatusJpa jpaStatus = toJpaStatus(status);
+        return cartJpaRepository.findByCustomerIdAndStatus(customerId, jpaStatus)
+                .map(cartMapper::toDomainEntity);
+    }
+
+    @Override
     public Optional<Cart> findById(UUID cartId) {
         return cartJpaRepository.findById(cartId)
                 .map(cartMapper::toDomainEntity);
+    }
+    
+    // Map domain CartStatus to JPA CartStatusJpa
+    private CartStatusJpa toJpaStatus(CartStatus status) {
+        return switch (status) {
+            case ACTIVE -> CartStatusJpa.ACTIVE;
+            case CONFIRMED -> CartStatusJpa.CONFIRMED;
+            case EXPIRED -> CartStatusJpa.EXPIRED;
+        };
     }
 }
