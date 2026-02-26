@@ -35,7 +35,8 @@ public class CartRepositoryAdapter implements CartRepositoryPort {
 
     @Override
     public Optional<Cart> findByCustomerIdAndStatus(UUID customerId, CartStatus status) {
-        return cartJpaRepository.findByCustomerIdAndStatus(customerId, status)
+        CartStatusJpa jpaStatus = toJpaStatus(status);
+        return cartJpaRepository.findByCustomerIdAndStatus(customerId, jpaStatus)
                 .map(cartMapper::toDomainEntity);
     }
 
@@ -43,5 +44,14 @@ public class CartRepositoryAdapter implements CartRepositoryPort {
     public Optional<Cart> findById(UUID cartId) {
         return cartJpaRepository.findById(cartId)
                 .map(cartMapper::toDomainEntity);
+    }
+    
+    // Map domain CartStatus to JPA CartStatusJpa
+    private CartStatusJpa toJpaStatus(CartStatus status) {
+        return switch (status) {
+            case ACTIVE -> CartStatusJpa.ACTIVE;
+            case CONFIRMED -> CartStatusJpa.CONFIRMED;
+            case EXPIRED -> CartStatusJpa.EXPIRED;
+        };
     }
 }
