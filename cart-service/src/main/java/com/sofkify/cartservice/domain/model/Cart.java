@@ -47,6 +47,11 @@ public class Cart {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
 
+        // Validar que el carrito esté en estado ACTIVE
+        if (this.status != CartStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot add items to a cart that is not ACTIVE. Current status: " + this.status);
+        }
+
         // Buscar si el producto ya existe en el carrito
         Optional<CartItem> existingItem = findItemByProductId(productId);
         
