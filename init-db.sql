@@ -1,22 +1,16 @@
--- Crear las bases de datos para cada microservicio
-SELECT 'CREATE DATABASE sofkify_users'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sofkify_users')
-\gexec
+-- Script de inicialización para PostgreSQL
+-- Este script se ejecuta automáticamente cuando se crea el contenedor por primera vez
+-- La base de datos principal ya está creada por POSTGRES_DB
 
-SELECT 'CREATE DATABASE sofkify_products_bd'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sofkify_products_bd')
-\gexec
+-- Verificar que estamos conectados a la base de datos correcta
+SELECT current_database();
 
-SELECT 'CREATE DATABASE sofkify_cars_bd'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sofkify_cars_bd')
-\gexec
+-- Crear extensiones útiles si es necesario
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-SELECT 'CREATE DATABASE sofkify_orders_bd'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sofkify_orders_bd')
-\gexec
-
--- Dar permisos al usuario postgres
-GRANT ALL PRIVILEGES ON DATABASE sofkify_users TO CURRENT_USER;
-GRANT ALL PRIVILEGES ON DATABASE sofkify_products_bd TO CURRENT_USER;
-GRANT ALL PRIVILEGES ON DATABASE sofkify_cars_bd TO CURRENT_USER;
-GRANT ALL PRIVILEGES ON DATABASE sofkify_orders_bd TO CURRENT_USER;
+-- Log de inicialización exitosa
+DO $$
+BEGIN
+    RAISE NOTICE 'Base de datos % inicializada correctamente', current_database();
+END $$;
