@@ -1,0 +1,765 @@
+{
+	"info": {
+		"_postman_id": "sofkify-complete-flow",
+		"name": "Sofkify - Flujo Completo E2E",
+		"description": "Colección completa para probar el flujo end-to-end de Sofkify: Usuarios → Productos → Carrito → Órdenes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url_users",
+			"value": "http://localhost:8080/api/users",
+			"type": "string"
+		},
+		{
+			"key": "base_url_products",
+			"value": "http://localhost:8081/api/products",
+			"type": "string"
+		},
+		{
+			"key": "base_url_orders",
+			"value": "http://localhost:8082/api/orders",
+			"type": "string"
+		},
+		{
+			"key": "base_url_carts",
+			"value": "http://localhost:8083/api/carts",
+			"type": "string"
+		},
+		{
+			"key": "customer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "product_id_1",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "product_id_2",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "cart_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "cart_item_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "order_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. USUARIOS",
+			"item": [
+				{
+					"name": "1.1 Crear Usuario (Cliente)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('customer_id', response.id);",
+									"    console.log('Customer ID guardado:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"cliente@sofkify.com\",\n  \"password\": \"password123\",\n  \"name\": \"Juan Pérez\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_users}}",
+							"host": ["{{base_url_users}}"]
+						},
+						"description": "Crea un nuevo usuario cliente. El ID se guarda automáticamente en la variable customer_id."
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Login Usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('Login exitoso. User ID:', response.userId);",
+									"    console.log('Token:', response.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"cliente@sofkify.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_users}}/auth/login",
+							"host": ["{{base_url_users}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Autentica al usuario y retorna un token JWT."
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Obtener Usuario por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_users}}/{{customer_id}}",
+							"host": ["{{base_url_users}}"],
+							"path": ["{{customer_id}}"]
+						},
+						"description": "Obtiene los detalles de un usuario por su ID."
+					},
+					"response": []
+				},
+				{
+					"name": "1.4 Obtener Usuario por Email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_users}}/email/cliente@sofkify.com",
+							"host": ["{{base_url_users}}"],
+							"path": ["email", "cliente@sofkify.com"]
+						},
+						"description": "Obtiene los detalles de un usuario por su email."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gestión de usuarios y autenticación"
+		},
+		{
+			"name": "2. PRODUCTOS",
+			"item": [
+				{
+					"name": "2.1 Crear Producto 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('product_id_1', response.id);",
+									"    console.log('Producto 1 ID guardado:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Laptop Dell XPS 15\",\n  \"description\": \"Laptop de alto rendimiento con procesador Intel i7\",\n  \"price\": 3500000,\n  \"stock\": 10,\n  \"status\": \"AVAILABLE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_products}}",
+							"host": ["{{base_url_products}}"]
+						},
+						"description": "Crea el primer producto de prueba."
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Crear Producto 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('product_id_2', response.id);",
+									"    console.log('Producto 2 ID guardado:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Mouse Logitech MX Master 3\",\n  \"description\": \"Mouse ergonómico inalámbrico de alta precisión\",\n  \"price\": 350000,\n  \"stock\": 25,\n  \"status\": \"AVAILABLE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_products}}",
+							"host": ["{{base_url_products}}"]
+						},
+						"description": "Crea el segundo producto de prueba."
+					},
+					"response": []
+				},
+				{
+					"name": "2.3 Obtener Todos los Productos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_products}}",
+							"host": ["{{base_url_products}}"]
+						},
+						"description": "Lista todos los productos disponibles."
+					},
+					"response": []
+				},
+				{
+					"name": "2.4 Obtener Producto por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_products}}/{{product_id_1}}",
+							"host": ["{{base_url_products}}"],
+							"path": ["{{product_id_1}}"]
+						},
+						"description": "Obtiene los detalles de un producto específico."
+					},
+					"response": []
+				},
+				{
+					"name": "2.5 Filtrar Productos por Estado",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_products}}?status=AVAILABLE",
+							"host": ["{{base_url_products}}"],
+							"query": [
+								{
+									"key": "status",
+									"value": "AVAILABLE"
+								}
+							]
+						},
+						"description": "Filtra productos por estado (AVAILABLE, OUT_OF_STOCK, etc.)."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gestión de productos"
+		},
+		{
+			"name": "3. CARRITO",
+			"item": [
+				{
+					"name": "3.1 Agregar Producto 1 al Carrito",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('cart_id', response.id);",
+									"    if (response.items && response.items.length > 0) {",
+									"        pm.collectionVariables.set('cart_item_id', response.items[0].id);",
+									"    }",
+									"    console.log('Cart ID guardado:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}",
+								"description": "ID del cliente"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"{{product_id_1}}\",\n  \"quantity\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url_carts}}/items",
+							"host": ["{{base_url_carts}}"],
+							"path": ["items"]
+						},
+						"description": "Agrega el primer producto al carrito. Si no existe carrito activo, se crea uno nuevo."
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Agregar Producto 2 al Carrito",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"{{product_id_2}}\",\n  \"quantity\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_carts}}/items",
+							"host": ["{{base_url_carts}}"],
+							"path": ["items"]
+						},
+						"description": "Agrega el segundo producto al carrito existente."
+					},
+					"response": []
+				},
+				{
+					"name": "3.3 Obtener Carrito Activo",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_carts}}",
+							"host": ["{{base_url_carts}}"]
+						},
+						"description": "Obtiene el carrito activo del cliente."
+					},
+					"response": []
+				},
+				{
+					"name": "3.4 Obtener Carrito por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_carts}}/{{cart_id}}",
+							"host": ["{{base_url_carts}}"],
+							"path": ["{{cart_id}}"]
+						},
+						"description": "Obtiene un carrito específico por su ID."
+					},
+					"response": []
+				},
+				{
+					"name": "3.5 Actualizar Cantidad de Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"quantity\": 3\n}"
+						},
+						"url": {
+							"raw": "{{base_url_carts}}/items/{{cart_item_id}}",
+							"host": ["{{base_url_carts}}"],
+							"path": ["items", "{{cart_item_id}}"]
+						},
+						"description": "Actualiza la cantidad de un item en el carrito."
+					},
+					"response": []
+				},
+				{
+					"name": "3.6 Eliminar Item del Carrito",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_carts}}/items/{{cart_item_id}}",
+							"host": ["{{base_url_carts}}"],
+							"path": ["items", "{{cart_item_id}}"]
+						},
+						"description": "Elimina un item específico del carrito. NOTA: Ejecuta esto solo si quieres probar la eliminación."
+					},
+					"response": []
+				},
+				{
+					"name": "3.7 Confirmar Carrito",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_carts}}/{{cart_id}}/confirm",
+							"host": ["{{base_url_carts}}"],
+							"path": ["{{cart_id}}", "confirm"]
+						},
+						"description": "Confirma el carrito y lo marca como CONFIRMED. Después de esto, se puede crear una orden."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gestión del carrito de compras"
+		},
+		{
+			"name": "4. ÓRDENES",
+			"item": [
+				{
+					"name": "4.1 Crear Orden desde Carrito",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('order_id', response.id);",
+									"    console.log('Order ID guardado:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_orders}}/from-cart/{{cart_id}}",
+							"host": ["{{base_url_orders}}"],
+							"path": ["from-cart", "{{cart_id}}"]
+						},
+						"description": "Crea una orden a partir de un carrito confirmado. El carrito debe estar en estado CONFIRMED."
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Obtener Orden por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_orders}}/{{order_id}}",
+							"host": ["{{base_url_orders}}"],
+							"path": ["{{order_id}}"]
+						},
+						"description": "Obtiene los detalles completos de una orden específica."
+					},
+					"response": []
+				},
+				{
+					"name": "4.3 Obtener Órdenes por Cliente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_orders}}/customer/{{customer_id}}",
+							"host": ["{{base_url_orders}}"],
+							"path": ["customer", "{{customer_id}}"]
+						},
+						"description": "Obtiene todas las órdenes de un cliente específico. Este es el endpoint usado por la página 'Mis Órdenes'."
+					},
+					"response": []
+				},
+				{
+					"name": "4.4 Actualizar Estado de Orden",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"SHIPPED\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_orders}}/{{order_id}}/status",
+							"host": ["{{base_url_orders}}"],
+							"path": ["{{order_id}}", "status"]
+						},
+						"description": "Actualiza el estado de una orden. Estados válidos: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED, FAILED."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gestión de órdenes"
+		},
+		{
+			"name": "5. FLUJO COMPLETO E2E",
+			"item": [
+				{
+					"name": "PASO 1: Crear Usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('customer_id', response.id);",
+									"    console.log('✅ PASO 1 COMPLETADO - Customer ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test.e2e@sofkify.com\",\n  \"password\": \"test123\",\n  \"name\": \"Usuario E2E Test\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_users}}",
+							"host": ["{{base_url_users}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PASO 2: Crear Productos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('product_id_1', response.id);",
+									"    console.log('✅ PASO 2 COMPLETADO - Product ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Producto E2E Test\",\n  \"description\": \"Producto para prueba end-to-end\",\n  \"price\": 100000,\n  \"stock\": 50,\n  \"status\": \"AVAILABLE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_products}}",
+							"host": ["{{base_url_products}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PASO 3: Agregar al Carrito",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('cart_id', response.id);",
+									"    console.log('✅ PASO 3 COMPLETADO - Cart ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"{{product_id_1}}\",\n  \"quantity\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url_carts}}/items",
+							"host": ["{{base_url_carts}}"],
+							"path": ["items"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PASO 4: Confirmar Carrito",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ PASO 4 COMPLETADO - Carrito confirmado');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Customer-Id",
+								"value": "{{customer_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_carts}}/{{cart_id}}/confirm",
+							"host": ["{{base_url_carts}}"],
+							"path": ["{{cart_id}}", "confirm"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PASO 5: Crear Orden",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('order_id', response.id);",
+									"    console.log('✅ PASO 5 COMPLETADO - Order ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_orders}}/from-cart/{{cart_id}}",
+							"host": ["{{base_url_orders}}"],
+							"path": ["from-cart", "{{cart_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PASO 6: Ver Mis Órdenes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const orders = pm.response.json();",
+									"    console.log('✅ PASO 6 COMPLETADO - Total órdenes:', orders.length);",
+									"    console.log('🎉 FLUJO E2E COMPLETADO EXITOSAMENTE!');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_orders}}/customer/{{customer_id}}",
+							"host": ["{{base_url_orders}}"],
+							"path": ["customer", "{{customer_id}}"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Flujo completo end-to-end en 6 pasos secuenciales. Ejecuta cada request en orden para simular el flujo completo de un usuario."
+		}
+	]
+}
