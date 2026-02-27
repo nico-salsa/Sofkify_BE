@@ -10,7 +10,9 @@ import java.util.Objects;
 public record Money(BigDecimal amount, String currency) {
     
     public Money {
-        Objects.requireNonNull(amount, "Amount cannot be null");
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
         if (currency == null || currency.trim().isEmpty()) {
             throw new IllegalArgumentException("Currency cannot be null or empty");
         }
