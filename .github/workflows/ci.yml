@@ -44,20 +44,24 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      # Paso 3: Ejecutar tests
+      # Paso 3: Dar permisos ejecutables al gradlew
+      - name: Make gradlew executable
+        run: find . -name "gradlew" -type f -exec chmod +x {} \;
+
+      # Paso 4: Ejecutar tests
       - name: Run tests for ${{ matrix.service }}
         run: |
           cd ${{ matrix.service }}
           bash ./gradlew clean test --no-daemon
 
-      # Paso 4: Generar reporte de cobertura
+      # Paso 5: Generar reporte de cobertura
       - name: Generate coverage report for ${{ matrix.service }}
         if: always()
         run: |
           cd ${{ matrix.service }}
           bash ./gradlew jacocoTestReport --no-daemon
 
-      # Paso 5: Validar cobertura mínima (70%)
+      # Paso 6: Validar cobertura mínima (70%)
       - name: Verify test coverage for ${{ matrix.service }}
         if: always()
         run: |
@@ -78,7 +82,7 @@ jobs:
             fi
           fi
 
-      # Paso 6: Guardar reporte como artefacto
+      # Paso 7: Guardar reporte como artefacto
       - name: Upload coverage report for ${{ matrix.service }}
         if: always()
         uses: actions/upload-artifact@v4
@@ -87,7 +91,7 @@ jobs:
           path: ${{ matrix.service }}/build/reports/jacoco/test/
           retention-days: 30
 
-      # Paso 7: Comentar resultado en PR
+      # Paso 8: Comentar resultado en PR
       - name: Comment test results on PR
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
