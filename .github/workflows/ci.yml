@@ -1,0 +1,106 @@
+name: CI Pipeline Backend
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
+jobs:
+  test:
+    name: Test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: cart-service
+            jdk: '17'
+          - service: order-service
+            jdk: '17'
+          - service: product-service
+            jdk: '17'
+          - service: user-service
+            jdk: '21'
+
+    steps:
+      # Paso 1: Descargar el código del repositorio
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Paso 2: Configurar JDK según el servicio
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      # Paso 3: Dar permisos de ejecución al wrapper de Gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x ${{ matrix.service }}/gradlew
+
+      # Paso 4: Ejecutar tests
+      - name: Run tests for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          ./gradlew clean test --no-daemon
+
+      # Paso 5: Generar reporte de cobertura
+      - name: Generate coverage report for ${{ matrix.service }}
+        if: always()
+        run: |
+          cd ${{ matrix.service }}
+          ./gradlew jacocoTestReport --no-daemon
+
+      # Paso 6: Validar cobertura mínima (70%)
+      - name: Verify test coverage for ${{ matrix.service }}
+        if: always()
+        run: |
+          cd ${{ matrix.service }}
+          COVERAGE=$(grep -oP '(?<=<counter type="LINE" covered=")[^"]*' build/reports/jacoco/test/jacocoTestReport.xml | head -1)
+          TOTAL=$(grep -oP '(?<=<counter type="LINE" covered="[^"]*" missed=")[^"]*' build/reports/jacoco/test/jacocoTestReport.xml | head -1)
+          
+          if [ -z "$COVERAGE" ] || [ -z "$TOTAL" ]; then
+            echo "⚠️ No coverage data found (normal if no tests exist yet)"
+          else
+            PERCENTAGE=$((COVERAGE * 100 / (COVERAGE + TOTAL)))
+            echo "📊 Coverage: $PERCENTAGE%"
+            if [ $PERCENTAGE -lt 70 ]; then
+              echo "❌ Coverage is below 70% threshold ($PERCENTAGE%)"
+              exit 1
+            else
+              echo "✅ Coverage meets 70% threshold"
+            fi
+          fi
+
+      # Paso 7: Guardar reporte como artefacto
+      - name: Upload coverage report for ${{ matrix.service }}
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.service }}
+          path: ${{ matrix.service }}/build/reports/jacoco/test/
+          retention-days: 30
+
+      # Paso 8: Comentar resultado en PR
+      - name: Comment test results on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const service = '${{ matrix.service }}';
+            const status = '${{ job.status }}';
+            const emoji = status === 'success' ? '✅' : '❌';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${emoji} **${service}**: Tests ${status}`
+            });
