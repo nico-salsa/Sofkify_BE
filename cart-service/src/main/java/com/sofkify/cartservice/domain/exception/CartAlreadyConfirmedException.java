@@ -1,7 +1,6 @@
 package com.sofkify.cartservice.domain.exception;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -14,25 +13,37 @@ public class CartAlreadyConfirmedException extends CartException {
     
     public CartAlreadyConfirmedException(UUID cartId) {
         super("Cart is already confirmed");
-        this.cartId = Objects.requireNonNull(cartId, "Cart ID cannot be null");
+        if (cartId == null) {
+            throw new IllegalArgumentException("Cart ID cannot be null");
+        }
+        this.cartId = cartId;
         this.confirmationTime = null;
     }
     
     public CartAlreadyConfirmedException(UUID cartId, String message) {
         super(message);
-        this.cartId = Objects.requireNonNull(cartId, "Cart ID cannot be null");
+        if (cartId == null) {
+            throw new IllegalArgumentException("Cart ID cannot be null");
+        }
+        this.cartId = cartId;
         this.confirmationTime = null;
     }
     
     public CartAlreadyConfirmedException(UUID cartId, LocalDateTime confirmationTime) {
         super(String.format("Cart %s was already confirmed at %s", cartId, confirmationTime));
-        this.cartId = Objects.requireNonNull(cartId, "Cart ID cannot be null");
+        if (cartId == null) {
+            throw new IllegalArgumentException("Cart ID cannot be null");
+        }
+        this.cartId = cartId;
         this.confirmationTime = confirmationTime;
     }
     
     public CartAlreadyConfirmedException(UUID cartId, Throwable cause) {
         super("Cart is already confirmed", cause);
-        this.cartId = Objects.requireNonNull(cartId, "Cart ID cannot be null");
+        if (cartId == null) {
+            throw new IllegalArgumentException("Cart ID cannot be null");
+        }
+        this.cartId = cartId;
         this.confirmationTime = null;
     }
     
