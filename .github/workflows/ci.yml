@@ -33,6 +33,7 @@ jobs:
           cache: gradle
 
       - name: Grant execute to gradlew
+        working-directory: ${{ matrix.service }}
         run: chmod +x gradlew
 
       - name: Test and coverage
