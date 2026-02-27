@@ -75,6 +75,11 @@ Comando base para seguir logs:
 docker compose -f docker-compose.yml -f docker-compose.integration.yml logs -f user-service product-service cart-service order-service frontend
 ```
 
+## Calidad y pruebas
+
+- Plan y riesgos: [TEST_PLAN.md](TEST_PLAN.md)
+- Matriz Gherkin: [docs_IA/matriz_pruebas_gherkin.csv](docs_IA/matriz_pruebas_gherkin.csv)
+
 ## Detener stack
 
 ```powershell

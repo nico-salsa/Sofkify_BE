@@ -1,0 +1,9 @@
+ID,Servicio/Flujo,Endpoint o Ruta,GIVEN,WHEN,THEN,Datos,Esperado,Estado,Fecha,Ejecutor
+GH-01,Auth/Login,/api/users/auth/login,Usuario registrado,Envia POST con credenciales validas,Recibe 200 y token,correo y contrasena validos,Pendiente,,
+GH-02,Productos/Listado,/api/products,Catalogo existente,Realiza GET productos,Recibe 200 y lista,Sin cuerpo adicional,Pendiente,,
+GH-03,Carrito/Agregar Item,/api/carts/items,Cliente con productId valido,Envia POST con quantity>0 y header X-Customer-Id,Recibe 200 y total actualizado,productId y quantity,Pendiente,,
+GH-04,Carrito/Actualizar Item,/api/carts/items/{cartItemId},Carrito activo,Envia PUT con nueva cantidad,Recibe 200 con item actualizado,cartItemId y quantity,Pendiente,,
+GH-05,Carrito/Eliminar Item,/api/carts/items/{cartItemId},Carrito activo,Envia DELETE del item,Recibe 200 y total recalculado,cartItemId,Pendiente,,
+GH-06,Orden/Crear desde Carrito,/api/orders/from-cart/{cartId},Carrito confirmado,Envia POST para crear orden,Recibe 201 y orden creada,cartId,Pendiente,,
+GH-07,Orden/Listar por Cliente,/api/orders/customer/{customerId},Cliente con ordenes,Realiza GET de ordenes por cliente,Recibe 200 con listado,customerId,Pendiente,,
+GH-08,Frontend Flujo E2E,Navegacion FE,Usuario autenticado,Navega login->productos->carrito->orden,Visualiza success y datos correctos,Datos minimos de usuario/producto,Pendiente,,

@@ -12,11 +12,12 @@ Both repositories SHALL remove obsolete or contradictory artifacts that hide rea
 - **THEN** the documented commands SHALL match actual executable infrastructure for combined FE/BE runtime
 
 ### Requirement: Both repositories provide operational README guidance
-Each repository SHALL include a concise README with prerequisites, startup steps, environment variables, and verification commands for local integration.
+Each repository SHALL include a concise README with prerequisites, startup steps, environment variables, and verification commands for local integration **and links to the quality plan and Gherkin test matrix**.
 
 #### Scenario: New contributor can run integration from README only
 - **WHEN** a contributor follows README instructions from clean clone
 - **THEN** they SHALL be able to start services and verify real frontend-to-backend requests without tribal knowledge
+- **AND** they SHALL find links to the quality plan and the Gherkin test matrix for traceability
 
 ### Requirement: Cleanup changes are traceable and reviewable
 Repository hygiene updates SHALL preserve auditability through explicit change lists and rationale.

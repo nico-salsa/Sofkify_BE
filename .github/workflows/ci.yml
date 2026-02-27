@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+  pull_request:
+    branches:
+      - main
+      - develop
+      - feature/**
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend (Gradle) - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [cart-service, order-service, product-service, user-service]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Grant execute to gradlew
+        run: chmod +x gradlew
+
+      - name: Test and coverage
+        working-directory: ${{ matrix.service }}
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification --no-daemon
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-reports
+          path: |
+            ${{ matrix.service }}/build/reports/tests/test
+            ${{ matrix.service }}/build/reports/jacoco/test

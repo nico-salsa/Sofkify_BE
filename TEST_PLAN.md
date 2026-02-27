@@ -1,68 +1,46 @@
-﻿# TEST PLAN - Sofkify Backend (Teorico)
+﻿# TEST PLAN - Sofkify Backend
 
 ## 1. Objetivo
-Definir casos teoricos para nuevas funcionalidades en `Sofkify_BE`, aplicando ISTQB y tecnicas de diseno de pruebas.
+Definir y operacionalizar las pruebas para `Sofkify_BE`, cubriendo integración REST, gestión de riesgos y criterios de salida, con trazabilidad a una matriz de escenarios Gherkin.
 
-## 2. Principio ISTQB priorizado
-- Principal: 2 (pruebas basadas en riesgo).
-- Complementarios: 4 (agrupacion de defectos), 6 (dependencia del contexto).
+## 2. Alcance y niveles de prueba
+- Servicios: user-service, product-service, cart-service, order-service; frontend Vite para flujos E2E visibles.
+- Niveles: unit (clases y dominio), integration (REST entre capas/servicios), E2E manual (flujo FE/BE).
 
-## 3. Tecnicas aplicadas
-- Particion de equivalencia.
-- Valores limite.
-- Tabla de decision.
+## 3. Estrategia y herramientas
+- Unit/Integration backend: JUnit 5 + Spring Boot Test; datos controlados; JaCoCo para cobertura.
+- Integración REST manual/rápida: cURL/Postman usando endpoints documentados; ver [API_ENDPOINTS_REFERENCE.json](API_ENDPOINTS_REFERENCE.json) y [CURL_EXAMPLES.md](CURL_EXAMPLES.md).
+- Frontend opcional: Vitest + Testing Library para componentes; validación manual en navegador para flujos críticos.
+- Datos/fixtures: usar UUID conocidos y sembrado mínimo; limpiar entre ejecuciones.
 
-## 4. Caso base de referencia
-HU: `Sofkify_BE/product-service/histories/HU-PRODUCT-01.md`
+## 4. Calendario y responsables
+- Smoke diario (REST básico) antes de merges principales.
+- Suite de integración REST en CI por push/PR.
+- Revisión de matriz Gherkin y riesgos semanal o al cerrar iteración.
 
-### 4.1 Tabla de decision
-| Condicion | R1 | R2 | R3 | R4 |
-|---|---|---|---|---|
-| precio > 0 | Si | No | Si | Si |
-| stock >= 0 | Si | Si | No | Si |
-| categorias validas | Si | Si | Si | No |
-| Resultado | 201 | 400 | 400 | 400 |
+## 5. Gestion de riesgos
+- Integración inter-servicios (stock/ordenes) → Mitigar con escenarios REST y verificación de eventos de orden/stock.
+- Cobertura insuficiente (<70%) → CI con umbral y reporte Jacoco; priorizar rutas críticas.
+- Datos inconsistentes en entornos → Scripts de seed y aislamiento de pruebas (containers o perfiles).
+- Flujos FE/BE rotos por CORS/config → Validar en smoke FE y logs HTTP.
 
-### 4.2 Escenarios Gherkin
-```gherkin
-Feature: Crear producto
+## 6. Pruebas de integración REST (endpoints base)
+- user-service: POST /api/users, POST /api/users/auth/login, GET /api/users/{id}
+- product-service: GET /api/products, GET /api/products/{id}, POST /api/products
+- cart-service: POST /api/carts/items, PUT /api/carts/items/{cartItemId}, DELETE /api/carts/items/{cartItemId}, GET /api/carts
+- order-service: POST /api/orders/from-cart/{cartId}, GET /api/orders/{orderId}, GET /api/orders/customer/{customerId}
 
-  Scenario: Crear producto con datos validos
-    Given administrador autenticado
-    And precio > 0 y stock >= 0
-    When envia POST /api/products
-    Then responde 201
-    And retorna estado ACTIVE
+## 7. Matriz de pruebas Gherkin
+- Hoja de cálculo: [docs_IA/matriz_pruebas_gherkin.csv](docs_IA/matriz_pruebas_gherkin.csv)
+- Columnas mínimas: ID, servicio/flujo, endpoint/ruta, GIVEN/WHEN/THEN, datos, esperado, estado (Pasó/Falló), fecha, ejecutor.
+- Flujos cubiertos: login, listado de productos, agregar/actualizar/eliminar carrito, crear orden desde carrito, listar órdenes, flujo E2E FE.
 
-  Scenario: Rechazar precio invalido
-    Given administrador autenticado
-    And precio = 0
-    When envia POST /api/products
-    Then responde 400 por regla de negocio
+## 8. Criterios de salida
+- Cobertura de pruebas en CI ≥70% (fail si menor).
+- Escenarios Gherkin de flujos críticos registrados en la matriz y ejecutados al menos una vez por iteración.
+- Riesgos documentados con mitigación y sin issues abiertos bloqueantes en CI.
 
-  Scenario: Rechazar stock negativo
-    Given administrador autenticado
-    And stock = -1
-    When envia POST /api/products
-    Then responde 400 por regla de negocio
-```
-
-### 4.3 Casos teoricos
-| ID | Tecnica | Datos | Esperado | Prioridad |
-|---|---|---|---|---|
-| BE-01 | Equivalencia valida | precio=100, stock=10 | 201 + ACTIVE | Alta |
-| BE-02 | Equivalencia invalida | precio=0 | 400 | Alta |
-| BE-03 | Equivalencia invalida | precio=-1 | 400 | Alta |
-| BE-04 | Limite | stock=-1 | 400 | Alta |
-| BE-05 | Limite | stock=0 | 201 | Alta |
-| BE-06 | Limite | stock=1 | 201 | Media |
-
-## 5. Riesgos prioritarios adicionales
-- Publicacion/consumo de eventos `OrderCreated`.
-- Errores transaccionales en decremento de stock.
-- Integraciones REST entre servicios.
-
-## 6. Criterio de salida
-- 100% de criterios de aceptacion de la HU mapeados.
-- Casos felices + error + borde definidos.
-- Trazabilidad HU -> criterio -> caso.
+## 9. Referencias
+- API REST: [API_ENDPOINTS_REFERENCE.json](API_ENDPOINTS_REFERENCE.json)
+- Ejemplos rápidos: [CURL_EXAMPLES.md](CURL_EXAMPLES.md)
+- Matriz: [docs_IA/matriz_pruebas_gherkin.csv](docs_IA/matriz_pruebas_gherkin.csv)
