@@ -1,0 +1,506 @@
+{
+  "microservicios": {
+    "user-service": {
+      "puerto": 8080,
+      "base_url": "http://localhost:8080/api/users",
+      "endpoints": [
+        {
+          "metodo": "POST",
+          "ruta": "/api/users",
+          "descripcion": "Crear nuevo usuario",
+          "body": {
+            "email": "string",
+            "password": "string",
+            "name": "string"
+          },
+          "respuesta": {
+            "id": "UUID",
+            "email": "string",
+            "name": "string",
+            "role": "CUSTOMER | ADMIN",
+            "active": "boolean"
+          }
+        },
+        {
+          "metodo": "POST",
+          "ruta": "/api/users/auth/login",
+          "descripcion": "Autenticar usuario",
+          "body": {
+            "email": "string",
+            "password": "string"
+          },
+          "respuesta": {
+            "userId": "UUID",
+            "email": "string",
+            "name": "string",
+            "token": "JWT string"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/users/{id}",
+          "descripcion": "Obtener usuario por ID",
+          "parametros": {
+            "id": "UUID en path"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/users/email/{email}",
+          "descripcion": "Obtener usuario por email",
+          "parametros": {
+            "email": "string en path"
+          }
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/api/users/{id}",
+          "descripcion": "Actualizar usuario",
+          "body": {
+            "name": "string (opcional)",
+            "password": "string (opcional)"
+          }
+        },
+        {
+          "metodo": "POST",
+          "ruta": "/api/users/{id}/promote",
+          "descripcion": "Promover usuario a ADMIN"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/api/users/{id}",
+          "descripcion": "Desactivar usuario"
+        }
+      ]
+    },
+    "product-service": {
+      "puerto": 8081,
+      "base_url": "http://localhost:8081/api/products",
+      "endpoints": [
+        {
+          "metodo": "POST",
+          "ruta": "/api/products",
+          "descripcion": "Crear nuevo producto",
+          "body": {
+            "name": "string",
+            "description": "string",
+            "price": "number",
+            "stock": "number",
+            "status": "AVAILABLE | OUT_OF_STOCK | DISCONTINUED"
+          },
+          "respuesta": {
+            "id": "UUID",
+            "name": "string",
+            "description": "string",
+            "price": "number",
+            "stock": "number",
+            "status": "string",
+            "createdAt": "timestamp",
+            "updatedAt": "timestamp"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/products",
+          "descripcion": "Obtener todos los productos",
+          "query_params": {
+            "status": "AVAILABLE | OUT_OF_STOCK | DISCONTINUED (opcional)"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/products/{id}",
+          "descripcion": "Obtener producto por ID",
+          "parametros": {
+            "id": "UUID en path"
+          }
+        }
+      ]
+    },
+    "cart-service": {
+      "puerto": 8083,
+      "base_url": "http://localhost:8083/api/carts",
+      "headers_requeridos": {
+        "X-Customer-Id": "UUID del cliente (requerido en la mayoría de endpoints)"
+      },
+      "endpoints": [
+        {
+          "metodo": "POST",
+          "ruta": "/api/carts/items",
+          "descripcion": "Agregar item al carrito (crea carrito si no existe)",
+          "headers": {
+            "X-Customer-Id": "UUID",
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "productId": "UUID",
+            "quantity": "number"
+          },
+          "respuesta": {
+            "id": "UUID (cart_id)",
+            "customerId": "UUID",
+            "status": "ACTIVE",
+            "items": [
+              {
+                "id": "UUID (cart_item_id)",
+                "productId": "UUID",
+                "productName": "string",
+                "unitPrice": "number",
+                "quantity": "number",
+                "subtotal": "number"
+              }
+            ],
+            "totalAmount": "number",
+            "createdAt": "timestamp",
+            "updatedAt": "timestamp"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/carts",
+          "descripcion": "Obtener carrito activo del cliente",
+          "headers": {
+            "X-Customer-Id": "UUID"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/carts/{cartId}",
+          "descripcion": "Obtener carrito por ID",
+          "parametros": {
+            "cartId": "UUID en path"
+          }
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/api/carts/items/{cartItemId}",
+          "descripcion": "Actualizar cantidad de un item",
+          "headers": {
+            "X-Customer-Id": "UUID",
+            "Content-Type": "application/json"
+          },
+          "parametros": {
+            "cartItemId": "UUID en path"
+          },
+          "body": {
+            "quantity": "number"
+          }
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/api/carts/items/{cartItemId}",
+          "descripcion": "Eliminar item del carrito",
+          "headers": {
+            "X-Customer-Id": "UUID"
+          },
+          "parametros": {
+            "cartItemId": "UUID en path"
+          }
+        },
+        {
+          "metodo": "POST",
+          "ruta": "/api/carts/{cartId}/confirm",
+          "descripcion": "Confirmar carrito (cambia estado a CONFIRMED)",
+          "headers": {
+            "X-Customer-Id": "UUID"
+          },
+          "parametros": {
+            "cartId": "UUID en path"
+          },
+          "respuesta": {
+            "cartId": "UUID",
+            "status": "CONFIRMED",
+            "message": "Cart confirmed successfully"
+          }
+        }
+      ],
+      "estados_carrito": [
+        "ACTIVE - Carrito activo, se pueden agregar/modificar items",
+        "CONFIRMED - Carrito confirmado, listo para crear orden",
+        "CONVERTED_TO_ORDER - Carrito ya convertido en orden"
+      ]
+    },
+    "order-service": {
+      "puerto": 8082,
+      "base_url": "http://localhost:8082/api/orders",
+      "endpoints": [
+        {
+          "metodo": "POST",
+          "ruta": "/api/orders/from-cart/{cartId}",
+          "descripcion": "Crear orden desde carrito confirmado",
+          "parametros": {
+            "cartId": "UUID en path (debe estar en estado CONFIRMED)"
+          },
+          "respuesta": {
+            "id": "UUID (order_id)",
+            "cartId": "UUID",
+            "customerId": "UUID",
+            "status": "PENDING",
+            "items": [
+              {
+                "id": "UUID",
+                "productId": "UUID",
+                "productName": "string",
+                "unitPrice": "number",
+                "quantity": "number",
+                "subtotal": "number"
+              }
+            ],
+            "totalAmount": "number",
+            "createdAt": "timestamp"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/orders/{orderId}",
+          "descripcion": "Obtener orden por ID",
+          "parametros": {
+            "orderId": "UUID en path"
+          }
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/orders/customer/{customerId}",
+          "descripcion": "Obtener todas las órdenes de un cliente (usado por 'Mis Órdenes')",
+          "parametros": {
+            "customerId": "UUID en path"
+          },
+          "respuesta": [
+            {
+              "id": "UUID",
+              "cartId": "UUID",
+              "customerId": "UUID",
+              "status": "string",
+              "items": "array",
+              "totalAmount": "number",
+              "createdAt": "timestamp"
+            }
+          ]
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/api/orders/{orderId}/status",
+          "descripcion": "Actualizar estado de orden",
+          "parametros": {
+            "orderId": "UUID en path"
+          },
+          "body": {
+            "status": "PENDING | CONFIRMED | SHIPPED | DELIVERED | CANCELLED | FAILED"
+          }
+        }
+      ],
+      "estados_orden": [
+        "PENDING - Orden creada, pendiente de confirmación",
+        "CONFIRMED - Orden confirmada",
+        "SHIPPED - Orden enviada",
+        "DELIVERED - Orden entregada",
+        "CANCELLED - Orden cancelada",
+        "FAILED - Orden fallida"
+      ]
+    }
+  },
+  "flujos_principales": {
+    "flujo_1_compra_completa": {
+      "nombre": "Compra Completa (E2E)",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "Crear Usuario",
+          "endpoint": "POST /api/users",
+          "guarda": "customer_id"
+        },
+        {
+          "paso": 2,
+          "accion": "Crear Producto",
+          "endpoint": "POST /api/products",
+          "guarda": "product_id"
+        },
+        {
+          "paso": 3,
+          "accion": "Agregar al Carrito",
+          "endpoint": "POST /api/carts/items",
+          "headers": {
+            "X-Customer-Id": "{{customer_id}}"
+          },
+          "body": {
+            "productId": "{{product_id}}",
+            "quantity": 2
+          },
+          "guarda": "cart_id"
+        },
+        {
+          "paso": 4,
+          "accion": "Confirmar Carrito",
+          "endpoint": "POST /api/carts/{{cart_id}}/confirm",
+          "headers": {
+            "X-Customer-Id": "{{customer_id}}"
+          }
+        },
+        {
+          "paso": 5,
+          "accion": "Crear Orden",
+          "endpoint": "POST /api/orders/from-cart/{{cart_id}}",
+          "guarda": "order_id"
+        },
+        {
+          "paso": 6,
+          "accion": "Ver Orden Creada",
+          "endpoint": "GET /api/orders/{{order_id}}"
+        }
+      ]
+    },
+    "flujo_2_mis_ordenes": {
+      "nombre": "Ver Historial de Órdenes (Mis Órdenes)",
+      "descripcion": "Simula la funcionalidad de la página 'Mis Órdenes' del frontend",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "Crear Usuario",
+          "endpoint": "POST /api/users",
+          "guarda": "customer_id"
+        },
+        {
+          "paso": 2,
+          "accion": "Crear múltiples órdenes",
+          "descripcion": "Repetir flujo de compra completa varias veces"
+        },
+        {
+          "paso": 3,
+          "accion": "Obtener todas las órdenes del cliente",
+          "endpoint": "GET /api/orders/customer/{{customer_id}}",
+          "nota": "Este es el endpoint que usa la página 'Mis Órdenes'"
+        }
+      ]
+    },
+    "flujo_3_modificar_carrito": {
+      "nombre": "Modificar Carrito antes de Confirmar",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "Crear Usuario y Productos",
+          "endpoints": [
+            "POST /api/users",
+            "POST /api/products (x2)"
+          ]
+        },
+        {
+          "paso": 2,
+          "accion": "Agregar items al carrito",
+          "endpoint": "POST /api/carts/items (x2)"
+        },
+        {
+          "paso": 3,
+          "accion": "Actualizar cantidad",
+          "endpoint": "PUT /api/carts/items/{{cart_item_id}}",
+          "body": {
+            "quantity": 5
+          }
+        },
+        {
+          "paso": 4,
+          "accion": "Eliminar un item",
+          "endpoint": "DELETE /api/carts/items/{{cart_item_id}}"
+        },
+        {
+          "paso": 5,
+          "accion": "Ver carrito actualizado",
+          "endpoint": "GET /api/carts"
+        },
+        {
+          "paso": 6,
+          "accion": "Confirmar y crear orden",
+          "endpoints": [
+            "POST /api/carts/{{cart_id}}/confirm",
+            "POST /api/orders/from-cart/{{cart_id}}"
+          ]
+        }
+      ]
+    },
+    "flujo_4_seguimiento_orden": {
+      "nombre": "Seguimiento de Estado de Orden",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "Crear orden completa",
+          "descripcion": "Ejecutar flujo_1_compra_completa"
+        },
+        {
+          "paso": 2,
+          "accion": "Actualizar a CONFIRMED",
+          "endpoint": "PUT /api/orders/{{order_id}}/status",
+          "body": {
+            "status": "CONFIRMED"
+          }
+        },
+        {
+          "paso": 3,
+          "accion": "Actualizar a SHIPPED",
+          "endpoint": "PUT /api/orders/{{order_id}}/status",
+          "body": {
+            "status": "SHIPPED"
+          }
+        },
+        {
+          "paso": 4,
+          "accion": "Actualizar a DELIVERED",
+          "endpoint": "PUT /api/orders/{{order_id}}/status",
+          "body": {
+            "status": "DELIVERED"
+          }
+        },
+        {
+          "paso": 5,
+          "accion": "Verificar estado final",
+          "endpoint": "GET /api/orders/{{order_id}}"
+        }
+      ]
+    }
+  },
+  "notas_importantes": {
+    "headers_criticos": {
+      "cart_service": "Todos los endpoints de carrito (excepto GET por ID) requieren header X-Customer-Id",
+      "content_type": "Todos los POST/PUT requieren Content-Type: application/json"
+    },
+    "orden_ejecucion": {
+      "regla_1": "Crear Usuario ANTES de crear carrito",
+      "regla_2": "Crear Productos ANTES de agregar al carrito",
+      "regla_3": "Confirmar Carrito ANTES de crear orden",
+      "regla_4": "NO agregar items a carrito CONFIRMED (el backend lo rechaza)"
+    },
+    "variables_automaticas": {
+      "descripcion": "La colección de Postman guarda automáticamente los IDs en variables",
+      "variables": [
+        "customer_id - Se guarda al crear usuario",
+        "product_id_1 - Se guarda al crear producto 1",
+        "product_id_2 - Se guarda al crear producto 2",
+        "cart_id - Se guarda al agregar primer item",
+        "cart_item_id - Se guarda al agregar item",
+        "order_id - Se guarda al crear orden"
+      ]
+    },
+    "errores_comunes": {
+      "404_not_found": "ID no existe - verifica que el request anterior se ejecutó correctamente",
+      "400_cart_confirmed": "Carrito ya confirmado - crea un nuevo carrito agregando un item",
+      "400_no_stock": "Producto sin stock - verifica el stock del producto",
+      "500_internal_error": "Microservicio caído - verifica docker-compose logs"
+    }
+  },
+  "bases_de_datos": {
+    "sofkify_users_bd": {
+      "puerto": 5432,
+      "tablas": ["users"]
+    },
+    "sofkify_products_bd": {
+      "puerto": 5432,
+      "tablas": ["products"]
+    },
+    "sofkify_carts_bd": {
+      "puerto": 5432,
+      "tablas": ["carts", "cart_items"]
+    },
+    "sofkify_orders_bd": {
+      "puerto": 5432,
+      "tablas": ["orders", "order_items"]
+    }
+  }
+}

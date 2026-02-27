@@ -44,7 +44,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USERNAME:-sofkify}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-sofkify_secure_pass}
-      POSTGRES_DB: ${DB_NAME_CARTS:-sofkify_cars_bd}
+      POSTGRES_DB: ${DB_NAME_CARTS:-sofkify_carts_bd}
     ports:
       - "5434:5432"
     volumes:
@@ -198,7 +198,7 @@ services:
       SERVER_PORT: 8083
       DB_HOST: ${DB_HOST_CARTS:-postgres-carts}
       DB_PORT: ${DB_PORT_CARTS:-5432}
-      DB_NAME: ${DB_NAME_CARTS:-sofkify_cars_bd}
+      DB_NAME: ${DB_NAME_CARTS:-sofkify_carts_bd}
       DB_USERNAME: ${DB_USERNAME:-sofkify}
       DB_PASSWORD: ${DB_PASSWORD:-sofkify_secure_pass}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
