@@ -48,14 +48,14 @@ jobs:
       - name: Run tests for ${{ matrix.service }}
         run: |
           cd ${{ matrix.service }}
-          bash gradlew clean test --no-daemon
+          ./gradlew clean test --no-daemon
 
       # Paso 4: Generar reporte de cobertura
       - name: Generate coverage report for ${{ matrix.service }}
         if: always()
         run: |
           cd ${{ matrix.service }}
-          bash gradlew jacocoTestReport --no-daemon
+          ./gradlew jacocoTestReport --no-daemon
 
       # Paso 5: Validar cobertura mínima (70%)
       - name: Verify test coverage for ${{ matrix.service }}
