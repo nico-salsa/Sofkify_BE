@@ -2,6 +2,8 @@ package com.sofkify.cartservice;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Este test es dummy y se debe reemplazar con tests reales en el Taller 2.
  */
 @DisplayName("Pipeline Validation Tests")
+@DataJpaTest
+@ActiveProfiles("test")
 class PipelineValidationTest {
 
     @Test
